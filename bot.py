@@ -10,6 +10,12 @@ client = discord.Client(intents=intents)
 async def on_ready():
     print(f"Logged in as {client.user}")
 
+responses = {
+    "help": "help is on it’s way",
+    "swano": "swano is the goat! leave mah goat alone",
+    "venus": "venus is swano’s mommy, swano needs mama mwilkies"
+}
+
 @client.event
 async def on_message(message):
     if message.author.bot:
@@ -17,10 +23,6 @@ async def on_message(message):
 
     msg = message.content.lower()
 
-    if "help" in msg:
-        await message.channel.send("help is on it’s way")
-
-    if "swano" in msg:
-        await message.channel.send("swano is the goat! leave mah goat alone")
-
-client.run(os.getenv("TOKEN"))
+    for key, reply in responses.items():
+        if key in msg:
+            await message.channel.send(reply)
