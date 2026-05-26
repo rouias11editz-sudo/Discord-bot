@@ -10,16 +10,18 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 # -------------------------
-# GROQ AI FUNCTION
+# OPENROUTER AI FUNCTION
 # -------------------------
 def ask_ai(prompt):
     headers = {
-        "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
-        "Content-Type": "application/json"
+        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://discordbot.local",
+        "X-Title": "Discord Bot"
     }
 
     data = {
-        "model": "llama3-8b-8192",
+        "model": "openai/gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": "You are a friendly Discord chatbot."},
             {"role": "user", "content": prompt}
@@ -27,7 +29,7 @@ def ask_ai(prompt):
     }
 
     response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
+        "https://openrouter.ai/api/v1/chat/completions",
         headers=headers,
         json=data
     )
@@ -49,13 +51,13 @@ async def on_message(message):
 
     msg = message.content.lower()
 
-    # TURN AI ON
+    # AI ON
     if msg == "ai work":
         ai_enabled = True
         await message.channel.send("AI is now online 🤖")
         return
 
-    # TURN AI OFF
+    # AI OFF
     if msg == "ai stop":
         ai_enabled = False
         await message.channel.send("AI is now offline 📴")
