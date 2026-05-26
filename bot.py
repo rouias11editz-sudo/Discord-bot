@@ -9,11 +9,9 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-# ---------------------------
-# GROQ AI SETUP
-# ---------------------------
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-
+# -------------------------
+# GROQ AI FUNCTION
+# -------------------------
 def ask_ai(prompt):
     headers = {
         "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
@@ -28,17 +26,20 @@ def ask_ai(prompt):
         ]
     }
 
-    response = requests.post(GROQ_API_URL, headers=headers, json=data)
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers=headers,
+        json=data
+    )
 
-    # safety check (prevents crash if API fails)
-    try:
-        return response.json()["choices"][0]["message"]["content"]
-    except:
-        return "AI error: try again later."
+    if response.status_code != 200:
+        return f"AI Error {response.status_code}: {response.text}"
 
-# ---------------------------
+    return response.json()["choices"][0]["message"]["content"]
+
+# -------------------------
 # BOT EVENTS
-# ---------------------------
+# -------------------------
 @client.event
 async def on_message(message):
     global ai_enabled
