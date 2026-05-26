@@ -26,3 +26,5 @@ async def on_message(message):
     for key, reply in responses.items():
         if key in msg:
             await message.channel.send(reply)
+
+client.run(os.getenv("TOKEN"))
