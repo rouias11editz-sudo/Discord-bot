@@ -10,11 +10,11 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 # -------------------------
-# OPENROUTER AI FUNCTION
+# AI FUNCTION (OpenRouter)
 # -------------------------
 def ask_ai(prompt):
     headers = {
-        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+        "Authorization": "Bearer " + os.getenv("OPENROUTER_API_KEY"),
         "Content-Type": "application/json",
         "HTTP-Referer": "https://discordbot.local",
         "X-Title": "Discord Bot"
@@ -51,19 +51,29 @@ async def on_message(message):
 
     msg = message.content.lower()
 
-    # AI ON
+    # -------------------------
+    # EXACT GIF DETECTION
+    # -------------------------
+    if "1508831915568926880/caption.gif" in msg:
+        await message.channel.send("pls stop chumeul chwo, sindeullin maxxing")
+        return
+
+    # -------------------------
+    # AI TOGGLE
+    # -------------------------
     if msg == "ai work":
         ai_enabled = True
         await message.channel.send("AI is now online 🤖")
         return
 
-    # AI OFF
     if msg == "ai stop":
         ai_enabled = False
         await message.channel.send("AI is now offline 📴")
         return
 
-    # NORMAL RESPONSES
+    # -------------------------
+    # NORMAL AUTO RESPONSES
+    # -------------------------
     responses = {
         "help": "help is on it’s way",
         "swano": "swano is the goat! leave mah goat alone",
@@ -76,7 +86,9 @@ async def on_message(message):
             await message.channel.send(reply)
             return
 
+    # -------------------------
     # AI MODE
+    # -------------------------
     if ai_enabled:
         reply = ask_ai(message.content)
         await message.channel.send(reply)
