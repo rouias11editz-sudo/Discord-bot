@@ -1,5 +1,7 @@
 import discord
 import os
+import requests
+
 ai_enabled = False
 
 intents = discord.Intents.default()
@@ -7,6 +9,36 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
+# ---------------------------
+# GROQ AI SETUP
+# ---------------------------
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+def ask_ai(prompt):
+    headers = {
+        "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "llama3-8b-8192",
+        "messages": [
+            {"role": "system", "content": "You are a friendly Discord chatbot."},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    response = requests.post(GROQ_API_URL, headers=headers, json=data)
+
+    # safety check (prevents crash if API fails)
+    try:
+        return response.json()["choices"][0]["message"]["content"]
+    except:
+        return "AI error: try again later."
+
+# ---------------------------
+# BOT EVENTS
+# ---------------------------
 @client.event
 async def on_message(message):
     global ai_enabled
@@ -28,7 +60,7 @@ async def on_message(message):
         await message.channel.send("AI is now offline 📴")
         return
 
-    # NORMAL RESPONSES (your old system)
+    # NORMAL RESPONSES
     responses = {
         "help": "help is on it’s way",
         "swano": "swano is the goat! leave mah goat alone",
@@ -41,8 +73,10 @@ async def on_message(message):
             await message.channel.send(reply)
             return
 
-    # AI MODE (placeholder for now)
+    # AI MODE
     if ai_enabled:
-        await message.channel.send("AI is thinking... (we will connect real AI next)")
+        reply = ask_ai(message.content)
+        await message.channel.send(reply)
+        return
 
 client.run(os.getenv("TOKEN"))
