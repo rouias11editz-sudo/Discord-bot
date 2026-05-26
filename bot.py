@@ -13,7 +13,9 @@ async def on_ready():
 responses = {
     "help": "help is on it’s way",
     "swano": "swano is the goat! leave mah goat alone",
-    "venus": "venus is swano’s mommy, swano needs mama mwilkies"
+    "venus": "venus is swano’s mommy, swano needs mama mwilkies",
+    "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)"
+}
 }
 
 @client.event
