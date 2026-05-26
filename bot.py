@@ -16,7 +16,6 @@ responses = {
     "venus": "venus is swano’s mommy, swano needs mama mwilkies",
     "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)"
 }
-}
 
 @client.event
 async def on_message(message):
