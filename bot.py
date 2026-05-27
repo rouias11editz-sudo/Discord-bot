@@ -30,33 +30,28 @@ def ask_ai(prompt):
             {
                 "role": "system",
                 "content": (
-                    "you are crewmate ai, a chaotic gen z discord bot. "
-                    "you ONLY speak in lowercase. "
-                    "you use slang naturally and act funny and unserious. "
-                    "keep replies short and casual. "
-                    "never sound formal or robotic."
+                    "you are a chaotic gen z discord bot. "
+                    "you speak lowercase, slang, short replies, funny tone. "
+                    "never be formal or robotic."
                 )
             },
-            {
-                "role": "user",
-                "content": prompt
-            }
+            {"role": "user", "content": prompt}
         ]
     }
 
-    response = requests.post(
+    r = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers=headers,
         json=data
     )
 
-    if response.status_code != 200:
-        return f"{response.status_code} | {response.text}"
+    if r.status_code != 200:
+        return f"{r.status_code} | {r.text}"
 
-    return response.json()["choices"][0]["message"]["content"]
+    return r.json()["choices"][0]["message"]["content"]
 
 # -------------------------
-# BOT READY
+# READY
 # -------------------------
 @client.event
 async def on_ready():
@@ -66,17 +61,19 @@ async def on_ready():
 # -------------------------
 # SLASH COMMANDS
 # -------------------------
-@tree.command(name="gay", description="check how gay someone is")
+@tree.command(name="gay")
 async def gay(interaction: discord.Interaction, user: discord.Member):
-    percent = random.randint(0, 100)
-    await interaction.response.send_message(f"{user.mention} is {percent}% gay 🌈")
+    await interaction.response.send_message(
+        f"{user.mention} is {random.randint(0,100)}% gay 🌈"
+    )
 
-@tree.command(name="autism", description="check autism percentage")
+@tree.command(name="autism")
 async def autism(interaction: discord.Interaction, user: discord.Member):
-    percent = random.randint(0, 100)
-    await interaction.response.send_message(f"{user.mention} is {percent}% autistic 🧩")
+    await interaction.response.send_message(
+        f"{user.mention} is {random.randint(0,100)}% autistic 🧩"
+    )
 
-@tree.command(name="ship", description="ship two users together")
+@tree.command(name="ship")
 async def ship(interaction: discord.Interaction, user1: discord.Member, user2: discord.Member):
 
     if (
@@ -84,14 +81,12 @@ async def ship(interaction: discord.Interaction, user1: discord.Member, user2: d
         or
         (user1.id == 652988923672395779 and user2.id == 1434299997133865030)
     ):
-        percent = 100
         await interaction.response.send_message(
-            f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = {percent}% compatibility 👀👀👀"
+            f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = 100% compatibility 👀👀👀"
         )
     else:
-        percent = random.randint(0, 100)
         await interaction.response.send_message(
-            f"hmm… {user1.mention} + {user2.mention} = {percent}% compatibility ahaha ig…."
+            f"hmm… {user1.mention} + {user2.mention} = {random.randint(0,100)}% compatibility ahaha ig…."
         )
 
 # -------------------------
@@ -107,30 +102,47 @@ async def on_message(message):
     msg = message.content.lower()
 
     # -------------------------
-    # GIF RESPONSE
+    # OWNER / ADMIN GREETING GIF
     # -------------------------
-    if "1508831915568926880/caption.gif" in msg:
-        await message.channel.send("pls stop chumeul chwo, sindeullin maxxing")
+    is_owner = message.guild and message.author.id == message.guild.owner_id
+    is_admin = message.author.guild_permissions.administrator
+
+    greetings = ["hi", "hello", "hey", "yo"]
+
+    if (is_owner or is_admin) and msg in greetings:
+
+        embed = discord.Embed(
+            description="👋",
+            color=0x4DA6FF
+        )
+
+        embed.set_image(
+            url="https://media.tenor.com/crtsfiles-juhoon-cortis-hi-waving/0.gif"
+        )
+
+        embed.set_author(
+            name=f"Greetings from {message.author.display_name}",
+            icon_url=message.author.display_avatar.url
+        )
+
+        await message.channel.send(embed=embed)
         return
 
     # -------------------------
-    # AI ON
+    # AI TOGGLE
     # -------------------------
     if msg == "ai work":
         ai_enabled = True
         await message.channel.send("yoo its me crewmate ai wsg!! send a message to speak")
         return
 
-    # -------------------------
-    # AI OFF
-    # -------------------------
     if msg == "ai stop":
         ai_enabled = False
         await message.channel.send("baaalright, im gone now bai")
         return
 
     # -------------------------
-    # SPAM COMMAND (MEDIUM FAST)
+    # SPAM COMMAND
     # -------------------------
     allowed_spammers = {
         1208382519611760670,
@@ -149,7 +161,7 @@ async def on_message(message):
         return
 
     # -------------------------
-    # AUTO RESPONSES
+    # AUTO RESPONSES (EMBEDS)
     # -------------------------
     responses = {
         "help": "help is on it’s way",
@@ -161,12 +173,25 @@ async def on_message(message):
         "keonho": "did you just talk about the cutest and gayest member of the group? Thats tuff dayummm",
         "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON, SJAIOAKXXK THAT’S SWANO’s HUBBY JUHOON",
         "martin": "Those holy predatory eyes 👀 👀",
-        "james": "WANNA SEE MY HELICOPTER??? 🚁"
+        "james": "WANNA SEE MY HELICOPTER??? 🚁",
+        "gojo": "are you 19+??? gojo is mah goat",
+        "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀"
     }
 
     for key, reply in responses.items():
         if key in msg:
-            await message.channel.send(reply)
+
+            embed = discord.Embed(
+                description=reply,
+                color=0x4DA6FF
+            )
+
+            embed.set_author(
+                name="AUTO RESPONSE",
+                icon_url=message.author.display_avatar.url
+            )
+
+            await message.channel.send(embed=embed)
             return
 
     # -------------------------
