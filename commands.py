@@ -2,8 +2,23 @@ import discord
 import random
 import asyncio
 import requests
+import json
+import time
 
 NAVY = 0x1B2B5B
+
+# -------------------------
+# MONEY FUNCTIONS
+# -------------------------
+def load_money():
+    with open("money.json", "r") as f:
+        return json.load(f)
+
+def save_money(data):
+    with open("money.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+daily_cooldown = {}
 
 def setup_commands(tree, client):
 
@@ -230,3 +245,94 @@ def setup_commands(tree, client):
         )
 
         await msg.edit(embed=result_embed)
+
+    # -------------------------
+    # BALANCE
+    # -------------------------
+    @tree.command(name="balance")
+    async def balance(interaction: discord.Interaction):
+
+        data = load_money()
+
+        user_id = str(interaction.user.id)
+
+        if user_id not in data:
+            data[user_id] = 0
+            save_money(data)
+
+        embed = discord.Embed(
+            title="💰 swucks balance",
+            description=f"you have **{data[user_id]} swucks**",
+            color=NAVY
+        )
+
+        await interaction.response.send_message(embed=embed)
+
+    # -------------------------
+    # DAILY
+    # -------------------------
+    @tree.command(name="daily")
+    async def daily(interaction: discord.Interaction):
+
+        user_id = str(interaction.user.id)
+
+        current_time = time.time()
+
+        if user_id in daily_cooldown:
+
+            last_claim = daily_cooldown[user_id]
+
+            if current_time - last_claim < 86400:
+
+                remaining = int(
+                    (86400 - (current_time - last_claim)) / 3600
+                )
+
+                embed = discord.Embed(
+                    title="⏳ daily cooldown",
+                    description=f"come back in {remaining} hours",
+                    color=NAVY
+                )
+
+                await interaction.response.send_message(embed=embed)
+
+                return
+
+        daily_cooldown[user_id] = current_time
+
+        data = load_money()
+
+        if user_id not in data:
+            data[user_id] = 0
+
+        reward = 50
+
+        data[user_id] += reward
+
+        save_money(data)
+
+        embed = discord.Embed(
+            title="🎁 daily swucks",
+            description=f"you received **{reward} swucks**",
+            color=NAVY
+        )
+
+        await interaction.response.send_message(embed=embed)
+
+    # -------------------------
+    # SHOP
+    # -------------------------
+    @tree.command(name="shop")
+    async def shop(interaction: discord.Interaction):
+
+        embed = discord.Embed(
+            title="🛒 swucks shop",
+            description=(
+                "🐱 **swano meowing VM** — 500 swucks\n\n"
+                "🎨 **custom role** — 30 swucks\n\n"
+                "😈 **dare swano to do anything** — 1000 swucks"
+            ),
+            color=NAVY
+        )
+
+        await interaction.response.send_message(embed=embed)
