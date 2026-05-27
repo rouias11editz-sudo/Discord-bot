@@ -102,6 +102,33 @@ async def on_message(message):
     msg = message.content.lower()
 
     # -------------------------
+    # OWNER / ADMIN GREETING GIF
+    # -------------------------
+    is_owner = message.guild and message.author.id == message.guild.owner_id
+    is_admin = message.author.guild_permissions.administrator
+
+    greetings = ["hi", "hello", "hey", "yo"]
+
+    if (is_owner or is_admin) and msg in greetings:
+
+        embed = discord.Embed(
+            description="👋",
+            color=0x4DA6FF
+        )
+
+        embed.set_image(
+            url="https://media.tenor.com/crtsfiles-juhoon-cortis-hi-waving/0.gif"
+        )
+
+        embed.set_author(
+            name=f"Greetings from {message.author.display_name}",
+            icon_url=message.author.display_avatar.url
+        )
+
+        await message.channel.send(embed=embed)
+        return
+
+    # -------------------------
     # AI TOGGLE
     # -------------------------
     if msg == "ai work":
@@ -134,59 +161,7 @@ async def on_message(message):
         return
 
     # -------------------------
-    # GLAZE (MULTI STYLE AI)
-    # -------------------------
-    if msg.startswith("glaze ") and message.mentions:
-
-        user = message.mentions[0]
-        parts = message.content.split()
-        style = "genz"
-
-        if len(parts) >= 3:
-            style = parts[2].lower()
-
-        styles = {
-            "anime": "you are an anime character hyping someone like a chosen one with dramatic energy",
-            "sigma": "you are a sigma male narrator praising someone as extremely dominant and independent",
-            "toxic": "you are a chaotic toxic discord user overhyping someone in a slightly unhinged way",
-            "wholesome": "you are a kind supportive friend hyping someone up in a wholesome way",
-            "genz": "you are a chaotic gen z discord user hyping someone up"
-        }
-
-        for i in range(5):
-
-            prompt = f"""
-            {styles.get(style, styles['genz'])}
-
-            user: {user.display_name}
-
-            rules:
-            - lowercase only
-            - short message
-            - hype the user
-            - match the style
-            - emojis allowed sometimes
-            """
-
-            text = ask_ai(prompt)
-
-            embed = discord.Embed(
-                description=text,
-                color=0xFF4DFF
-            )
-
-            embed.set_author(
-                name=f"{style.upper()} GLAZE — {user.display_name}",
-                icon_url=user.display_avatar.url
-            )
-
-            await message.channel.send(embed=embed)
-            await asyncio.sleep(0.6)
-
-        return
-
-    # -------------------------
-    # AUTO RESPONSES
+    # AUTO RESPONSES (EMBEDS)
     # -------------------------
     responses = {
         "help": "help is on it’s way",
@@ -205,7 +180,18 @@ async def on_message(message):
 
     for key, reply in responses.items():
         if key in msg:
-            await message.channel.send(reply)
+
+            embed = discord.Embed(
+                description=reply,
+                color=0x4DA6FF
+            )
+
+            embed.set_author(
+                name="AUTO RESPONSE",
+                icon_url=message.author.display_avatar.url
+            )
+
+            await message.channel.send(embed=embed)
             return
 
     # -------------------------
