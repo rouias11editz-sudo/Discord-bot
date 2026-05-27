@@ -60,7 +60,7 @@ def setup_events(client):
             "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
             "sean": "ouhh my eom freakk 😋😋😝😝 give me one chance seannnn",
             "keonho": "did you just talk about the cutest and gayest member of the group? Thats tuff dayummm",
-            "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON",
+            "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON THATS SWANO'S BABYYYY",
             "martin": "Those holy eyes 👀 👀",
             "james": "WANNA SEE MY HELICOPTER??? 🚁",
             "gojo": "are you 19+??? gojo is mah goat",
