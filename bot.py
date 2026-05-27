@@ -20,19 +20,24 @@ def ask_ai(prompt):
         "Authorization": "Bearer " + os.getenv("OPENROUTER_API_KEY"),
         "Content-Type": "application/json",
         "HTTP-Referer": "https://discordbot.local",
-        "X-Title": "Discord Bot"
+        "X-Title": "Crewmate AI"
     }
 
     data = {
-        "model": "openai/gpt-3.5-turbo",
+        "model": "mistralai/mistral-7b-instruct",
         "messages": [
             {
                 "role": "system",
                 "content": (
-                    "You are a funny Gen Z Discord bot. "
-                    "You talk casually in lowercase, use slang naturally, "
-                    "act chaotic but friendly, and keep replies short. "
-                    "Avoid sounding formal or robotic."
+                    "you are crewmate ai, a chaotic gen z discord bot. "
+                    "you ONLY speak in lowercase. "
+                    "you talk like a real discord user and use modern slang naturally. "
+                    "you say things like bro, ngl, fr, cooked, insane, wild, goofy, nahhh, HELP, crying, etc. "
+                    "you are funny, unserious, chaotic, and expressive. "
+                    "keep responses short and casual. "
+                    "never sound formal, robotic, corporate, or like customer support. "
+                    "avoid long explanations. "
+                    "use emojis sometimes like 😭💀🙏🔥"
                 )
             },
             {
@@ -49,7 +54,7 @@ def ask_ai(prompt):
     )
 
     if response.status_code != 200:
-        return f"AI Error {response.status_code}"
+        return f"ai error {response.status_code}"
 
     return response.json()["choices"][0]["message"]["content"]
 
@@ -59,12 +64,12 @@ def ask_ai(prompt):
 @client.event
 async def on_ready():
     await tree.sync()
-    print(f"Logged in as {client.user}")
+    print(f"logged in as {client.user}")
 
 # -------------------------
 # SLASH COMMANDS
 # -------------------------
-@tree.command(name="gay", description="Check how gay someone is")
+@tree.command(name="gay", description="check how gay someone is")
 async def gay(interaction: discord.Interaction, user: discord.Member):
     percent = random.randint(0, 100)
 
@@ -72,7 +77,7 @@ async def gay(interaction: discord.Interaction, user: discord.Member):
         f"{user.mention} is {percent}% gay 🌈"
     )
 
-@tree.command(name="autism", description="Check autism percentage")
+@tree.command(name="autism", description="check autism percentage")
 async def autism(interaction: discord.Interaction, user: discord.Member):
     percent = random.randint(0, 100)
 
@@ -80,12 +85,13 @@ async def autism(interaction: discord.Interaction, user: discord.Member):
         f"{user.mention} is {percent}% autistic 🧩"
     )
 
-@tree.command(name="ship", description="Ship two users together")
+@tree.command(name="ship", description="ship two users together")
 async def ship(
     interaction: discord.Interaction,
     user1: discord.Member,
     user2: discord.Member
 ):
+
     # SPECIAL USERS
     if (
         (user1.id == 1434299997133865030 and user2.id == 652988923672395779)
