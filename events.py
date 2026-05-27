@@ -1,10 +1,8 @@
 import discord
 import asyncio
-import random
 
-# -------------------------
-# EVENTS SETUP
-# -------------------------
+NAVY = 0x1B2B5B
+
 def setup_events(client):
 
     @client.event
@@ -16,7 +14,7 @@ def setup_events(client):
         msg = message.content.lower()
 
         # -------------------------
-        # OWNER / ADMIN GREETING GIF (UNCHANGED STYLE)
+        # GREETINGS
         # -------------------------
         is_owner = message.guild and message.author.id == message.guild.owner_id
         is_admin = message.author.guild_permissions.administrator
@@ -27,23 +25,14 @@ def setup_events(client):
 
             embed = discord.Embed(
                 description="👋",
-                color=0x1B2B5B
-            )
-
-            embed.set_image(
-                url="https://media.tenor.com/crtsfiles-juhoon-cortis-hi-waving/0.gif"
-            )
-
-            embed.set_author(
-                name=f"Greetings from {message.author.display_name}",
-                icon_url=message.author.display_avatar.url
+                color=NAVY
             )
 
             await message.channel.send(embed=embed)
             return
 
         # -------------------------
-        # SPAM SYSTEM (UNCHANGED LOGIC)
+        # SPAM
         # -------------------------
         allowed_spammers = {
             1208382519611760670,
@@ -54,16 +43,14 @@ def setup_events(client):
 
         if message.author.id in allowed_spammers and msg.startswith("spam "):
 
-            spam_text = message.content[5:]
-
             for i in range(5):
-                await message.channel.send(spam_text)
-                await asyncio.sleep(0.6)
+                await message.channel.send(message.content[5:])
+                await asyncio.sleep(0.5)
 
             return
 
         # -------------------------
-        # AUTO RESPONSES (UNCHANGED CONTENT)
+        # AUTO RESPONSES (UNCHANGED)
         # -------------------------
         responses = {
             "help": "help is on it’s way",
@@ -77,38 +64,22 @@ def setup_events(client):
             "martin": "Those holy eyes 👀 👀",
             "james": "WANNA SEE MY HELICOPTER??? 🚁",
             "gojo": "are you 19+??? gojo is mah goat",
-            "hori": "👀👀"
+            "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀"
         }
 
         for key, reply in responses.items():
             if key in msg:
-
-                embed = discord.Embed(
-                    description=reply,
-                    color=0x1B2B5B
+                await message.channel.send(
+                    embed=discord.Embed(
+                        description=reply,
+                        color=NAVY
+                    )
                 )
-
-                embed.set_author(
-                    name="AUTO RESPONSE",
-                    icon_url=message.author.display_avatar.url
-                )
-
-                await message.channel.send(embed=embed)
                 return
 
         # -------------------------
-        # AI CHAT (ONLY IF ENABLED)
+        # AI CHAT
         # -------------------------
         if getattr(client, "ai_enabled", False):
-
-            # IMPORTANT: your bot.py must set this flag
-            # client.ai_enabled = True / False
-
-            reply = await client.loop.run_in_executor(
-                None,
-                client.ask_ai,
-                message.content
-            )
-
+            reply = client.ask_ai(message.content)
             await message.channel.send(reply)
-            return
