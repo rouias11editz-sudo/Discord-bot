@@ -1,6 +1,8 @@
 import discord
 import os
 import requests
+import random
+from discord import app_commands
 
 ai_enabled = False
 
@@ -8,9 +10,10 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
 
 # -------------------------
-# AI FUNCTION (OpenRouter)
+# AI FUNCTION
 # -------------------------
 def ask_ai(prompt):
     headers = {
@@ -35,12 +38,49 @@ def ask_ai(prompt):
     )
 
     if response.status_code != 200:
-        return f"AI Error {response.status_code}: {response.text}"
+        return f"AI Error {response.status_code}"
 
     return response.json()["choices"][0]["message"]["content"]
 
 # -------------------------
-# BOT EVENTS
+# BOT READY
+# -------------------------
+@client.event
+async def on_ready():
+    await tree.sync()
+    print(f"Logged in as {client.user}")
+
+# -------------------------
+# SLASH COMMANDS
+# -------------------------
+@tree.command(name="gay", description="Check how gay someone is")
+async def gay(interaction: discord.Interaction, user: discord.Member):
+    percent = random.randint(0, 100)
+    await interaction.response.send_message(
+        f"{user.mention} is {percent}% gay 🌈"
+    )
+
+@tree.command(name="autism", description="Check autism percentage")
+async def autism(interaction: discord.Interaction, user: discord.Member):
+    percent = random.randint(0, 100)
+    await interaction.response.send_message(
+        f"{user.mention} is {percent}% autistic holy frick bro"
+    )
+
+@tree.command(name="ship", description="Ship two users together")
+async def ship(
+    interaction: discord.Interaction,
+    user1: discord.Member,
+    user2: discord.Member
+):
+    percent = random.randint(0, 100)
+
+    await interaction.response.send_message(
+        f"Hmm... {user1.mention} + {user2.mention} = {percent}% compatibility, ouhhh shii💖"
+    )
+
+# -------------------------
+# MESSAGE EVENTS
 # -------------------------
 @client.event
 async def on_message(message):
@@ -51,29 +91,26 @@ async def on_message(message):
 
     msg = message.content.lower()
 
-    # -------------------------
-    # EXACT GIF DETECTION
-    # -------------------------
+    # GIF RESPONSE
     if "1508831915568926880/caption.gif" in msg:
-        await message.channel.send("pls stop chumeul chwo, sindeullin maxxing")
+        await message.channel.send(
+            "pls stop chumeul chwo, sindeullin maxxing"
+        )
         return
 
-    # -------------------------
-    # AI TOGGLE
-    # -------------------------
+    # AI ON
     if msg == "ai work":
         ai_enabled = True
-        await message.channel.send("AI is now online 🤖")
+        await message.channel.send("yo hi this me crewmate ai I'm working now🤖")
         return
 
+    # AI OFF
     if msg == "ai stop":
         ai_enabled = False
-        await message.channel.send("AI is now offline 📴")
+        await message.channel.send("im tired stop abusing me ok bye I'm offline📴")
         return
 
-    # -------------------------
-    # NORMAL AUTO RESPONSES
-    # -------------------------
+    # AUTO RESPONSES
     responses = {
         "help": "help is on it’s way",
         "swano": "swano is the goat! leave mah goat alone",
@@ -86,9 +123,7 @@ async def on_message(message):
             await message.channel.send(reply)
             return
 
-    # -------------------------
-    # AI MODE
-    # -------------------------
+    # AI CHAT
     if ai_enabled:
         reply = ask_ai(message.content)
         await message.channel.send(reply)
