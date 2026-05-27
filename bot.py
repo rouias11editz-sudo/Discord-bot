@@ -240,33 +240,37 @@ async def on_message(message):
             return
 
     # -------------------------
-    # GUESS MEMBER GAME
-    # -------------------------
-    if message.channel.id in member_game:
+# GUESS MEMBER GAME
+# -------------------------
+if message.channel.id in member_game:
 
-        if len(message.mentions) > 0:
+    guessed_text = message.content.lower()
 
-            guessed_member = message.mentions[0]
+    answer_id = member_game[message.channel.id]
 
-            answer_id = member_game[message.channel.id]
+    answer_member = message.guild.get_member(answer_id)
 
-            # CORRECT
-            if guessed_member.id == answer_id:
+    if answer_member:
 
-                await message.channel.send(
-                    f"🎉 {message.author.mention} guessed the member correctly!"
-                )
+        display_name = answer_member.display_name.lower()
+        username = answer_member.name.lower()
 
-                del member_game[message.channel.id]
+        # CORRECT IF MESSAGE IS INSIDE NAME
+        if guessed_text in display_name or guessed_text in username:
 
-            else:
+            await message.channel.send(
+                f"🎉 {message.author.mention} guessed the member correctly surprinsgly ok!\n👤 it was **{answer_member.display_name}**"
+            )
 
-                await message.channel.send(
-                    "❌ wrong member"
-                )
+            del member_game[message.channel.id]
 
-            return
+        else:
 
+            await message.channel.send(
+                "❌ wrong member u fricking idiot oml"
+            )
+
+        return
     # -------------------------
     # OWNER / ADMIN GREETING GIF
     # -------------------------
