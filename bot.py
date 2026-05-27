@@ -5,13 +5,39 @@ import random
 import asyncio
 from discord import app_commands
 
-ai_enabled = False
-
+# -------------------------
+# INTENTS
+# -------------------------
 intents = discord.Intents.default()
+intents.members = True
 intents.message_content = True
 
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+
+# -------------------------
+# ECONOMY + GAME STATE
+# -------------------------
+user_currency = {}
+game_state = {}
+round_winner = {}
+
+ROLE_ID = 1509137943174840392
+
+# -------------------------
+# HELPERS
+# -------------------------
+def get_balance(user_id):
+    return user_currency.get(user_id, 0)
+
+async def add_currency(user_id, amount):
+    user_currency[user_id] = get_balance(user_id) + amount
+
+async def check_role(member):
+    if get_balance(member.id) >= 500:
+        role = member.guild.get_role(ROLE_ID)
+        if role and role not in member.roles:
+            await member.add_roles(role)
 
 # -------------------------
 # AI FUNCTION
@@ -20,8 +46,6 @@ def ask_ai(prompt):
     headers = {
         "Authorization": "Bearer " + os.getenv("OPENROUTER_API_KEY"),
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://discordbot.local",
-        "X-Title": "Crewmate AI"
     }
 
     data = {
@@ -29,11 +53,7 @@ def ask_ai(prompt):
         "messages": [
             {
                 "role": "system",
-                "content": (
-                    "you are a chaotic gen z discord bot. "
-                    "you speak lowercase, slang, short replies, funny tone. "
-                    "never be formal or robotic."
-                )
+                "content": "you are a chaotic gen z discord bot. short, funny replies."
             },
             {"role": "user", "content": prompt}
         ]
@@ -46,7 +66,7 @@ def ask_ai(prompt):
     )
 
     if r.status_code != 200:
-        return f"{r.status_code} | {r.text}"
+        return "AI error 💀"
 
     return r.json()["choices"][0]["message"]["content"]
 
@@ -59,147 +79,179 @@ async def on_ready():
     print(f"logged in as {client.user}")
 
 # -------------------------
-# SLASH COMMANDS
+# GAME: GUESS NUMBER (1-100)
 # -------------------------
-@tree.command(name="gay")
-async def gay(interaction: discord.Interaction, user: discord.Member):
+@tree.command(name="guess_number")
+async def guess_number(interaction: discord.Interaction):
+
+    number = random.randint(1, 100)
+
+    game_state[interaction.channel.id] = {
+        "type": "number",
+        "answer": number
+    }
+
+    round_winner[interaction.channel.id] = None
+
     await interaction.response.send_message(
-        f"{user.mention} is {random.randint(0,100)}% gay 🌈"
+        "🎮 GUESS THE NUMBER (1–100)!\n"
+        "You have 3 minutes. Type guesses in chat."
     )
 
-@tree.command(name="autism")
-async def autism(interaction: discord.Interaction, user: discord.Member):
-    await interaction.response.send_message(
-        f"{user.mention} is {random.randint(0,100)}% autistic 🧩"
-    )
+    await asyncio.sleep(180)
 
-@tree.command(name="ship")
-async def ship(interaction: discord.Interaction, user1: discord.Member, user2: discord.Member):
-
-    if (
-        (user1.id == 1434299997133865030 and user2.id == 652988923672395779)
-        or
-        (user1.id == 652988923672395779 and user2.id == 1434299997133865030)
-    ):
-        await interaction.response.send_message(
-            f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = 100% compatibility 👀👀👀"
+    if interaction.channel.id in game_state:
+        await interaction.channel.send(
+            f"⏱ time’s up holy u suck at this never play again! the number was **{number}** 💀"
         )
-    else:
-        await interaction.response.send_message(
-            f"hmm… {user1.mention} + {user2.mention} = {random.randint(0,100)}% compatibility ahaha ig…."
-        )
+        del game_state[interaction.channel.id]
+        round_winner.pop(interaction.channel.id, None)
 
 # -------------------------
-# MESSAGE EVENTS
+# GAME: GUESS MEMBER
+# -------------------------
+@tree.command(name="guess_member")
+async def guess_member(interaction: discord.Interaction):
+
+    members = [m for m in interaction.guild.members if not m.bot]
+    target = random.choice(members)
+
+    game_state[interaction.channel.id] = {
+        "type": "member",
+        "answer": target.id
+    }
+
+    await interaction.response.send_message(
+        "👥 GUESS THE MEMBER!\n"
+        "You have 3 minutes. Ping the user."
+    )
+
+    await asyncio.sleep(180)
+
+    if interaction.channel.id in game_state:
+        await interaction.channel.send(
+            f"⏱ time’s up fricking idiot u suck! it was {target.mention} 💀"
+        )
+        del game_state[interaction.channel.id]
+
+# -------------------------
+# LEADERBOARD
+# -------------------------
+@tree.command(name="leaderboard")
+async def leaderboard(interaction: discord.Interaction):
+
+    if not user_currency:
+        await interaction.response.send_message("no data 💀")
+        return
+
+    sorted_users = sorted(user_currency.items(), key=lambda x: x[1], reverse=True)[:10]
+
+    desc = ""
+
+    for i, (uid, bal) in enumerate(sorted_users, start=1):
+        user = await client.fetch_user(uid)
+        desc += f"**{i}. {user.name}** — {bal} 💰\n"
+
+    embed = discord.Embed(
+        title="🏆 SWANO LEADERBOARD",
+        description=desc,
+        color=0x4DA6FF
+    )
+
+    await interaction.response.send_message(embed=embed)
+
+# -------------------------
+# BALANCE
+# -------------------------
+@tree.command(name="balance")
+async def balance(interaction: discord.Interaction):
+    await interaction.response.send_message(
+        f"💰 {interaction.user.mention} has **{get_balance(interaction.user.id)}** swano currency"
+    )
+
+# -------------------------
+# MESSAGE EVENTS (GAME LOGIC + AI CHAT)
 # -------------------------
 @client.event
 async def on_message(message):
-    global ai_enabled
 
     if message.author.bot:
         return
 
     msg = message.content.lower()
-
-    # -------------------------
-    # OWNER / ADMIN GREETING GIF
-    # -------------------------
-    is_owner = message.guild and message.author.id == message.guild.owner_id
-    is_admin = message.author.guild_permissions.administrator
-
-    greetings = ["hi", "hello", "hey", "yo"]
-
-    if (is_owner or is_admin) and msg in greetings:
-
-        embed = discord.Embed(
-            description="is that a swano glazer in the chat",
-            color=0x4DA6FF
-        )
-
-        embed.set_image(
-    url="https://media.tenor.com/MY_ULOc6jpcAAAPo/crtsfiles-juhoon.mp4"
-)
-
-        embed.set_author(
-            name=f"Greetings from {message.author.display_name}",
-            icon_url=message.author.display_avatar.url
-        )
-
-        await message.channel.send(embed=embed)
-        return
-
-    # -------------------------
-    # AI TOGGLE
-    # -------------------------
-    if msg == "ai work":
-        ai_enabled = True
-        await message.channel.send("yoo its me crewmate ai wsg!! send a message to speak")
-        return
-
-    if msg == "ai stop":
-        ai_enabled = False
-        await message.channel.send("baaalright, im gone now bai")
-        return
-
-    # -------------------------
-    # SPAM COMMAND
-    # -------------------------
-    allowed_spammers = {
-        1208382519611760670,
-        1434299997133865030,
-        652988923672395779,
-        1148948508481699850
-    }
-
-    if message.author.id in allowed_spammers and msg.startswith("spam "):
-        spam_text = message.content[5:]
-
-        for i in range(5):
-            await message.channel.send(spam_text)
-            await asyncio.sleep(0.6)
-
-        return
-
-    # -------------------------
-    # AUTO RESPONSES (EMBEDS)
-    # -------------------------
-    responses = {
-        "help": "help is on it’s way",
-        "swano": "swano is the goat! leave mah goat alone",
-        "venus": "venus is swano’s mommy, swano needs mama mwilkies",
-        "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)",
-        "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
-        "sean": "ouhh my eom freakk 😋😋😝😝 give me one chance seannnn",
-        "keonho": "did you just talk about the cutest and gayest member of the group? Thats tuff dayummm",
-        "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON, SJAIOAKXXK THAT’S SWANO’s HUBBY JUHOON",
-        "martin": "Those holy predatory eyes 👀 👀",
-        "james": "WANNA SEE MY HELICOPTER??? 🚁",
-        "gojo": "are you 19+??? gojo is mah goat",
-        "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀"
-    }
-
-    for key, reply in responses.items():
-        if key in msg:
-
-            embed = discord.Embed(
-                description=reply,
-                color=0x4DA6FF
-            )
-
-            embed.set_author(
-                name="AUTO RESPONSE",
-                icon_url=message.author.display_avatar.url
-            )
-
-            await message.channel.send(embed=embed)
-            return
+    channel_id = message.channel.id
 
     # -------------------------
     # AI CHAT
     # -------------------------
-    if ai_enabled:
-        reply = ask_ai(message.content)
+    if msg.startswith("ai "):
+        prompt = message.content[3:]
+        reply = ask_ai(prompt)
         await message.channel.send(reply)
         return
 
+    # -------------------------
+    # NUMBER GAME LOGIC
+    # -------------------------
+    if channel_id in game_state:
+
+        game = game_state[channel_id]
+
+        # -------------------------
+        # NUMBER GAME
+        # -------------------------
+        if game["type"] == "number" and message.content.isdigit():
+
+            guess = int(message.content)
+            answer = game["answer"]
+
+            if guess == answer:
+
+                if round_winner[channel_id] is None:
+                    round_winner[channel_id] = message.author.id
+                    await message.channel.send("⚡ FAST WIN!! +20 currency")
+                    await add_currency(message.author.id, 20)
+                else:
+                    await message.channel.send("🎉 correct!! +10 currency")
+                    await add_currency(message.author.id, 10)
+
+                await check_role(message.author)
+
+                del game_state[channel_id]
+                round_winner.pop(channel_id, None)
+                return
+
+            diff = abs(guess - answer)
+
+            if diff <= 5:
+                hint = "🔥 very close"
+            elif diff <= 15:
+                hint = "📉 close"
+            else:
+                hint = "❄️ far"
+
+            direction = "⬆️ higher" if guess < answer else "⬇️ lower"
+
+            await message.channel.send(f"{direction} — {hint}")
+            return
+
+        # -------------------------
+        # MEMBER GAME LOGIC
+        # -------------------------
+        if game["type"] == "member":
+
+            if message.mentions:
+
+                if message.mentions[0].id == game["answer"]:
+
+                    await message.channel.send("🎉 correct!! +10 currency")
+                    await add_currency(message.author.id, 10)
+                    await check_role(message.author)
+
+                    del game_state[channel_id]
+                    return
+
+# -------------------------
+# RUN BOT
+# -------------------------
 client.run(os.getenv("TOKEN"))
