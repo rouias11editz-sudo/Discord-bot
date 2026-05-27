@@ -26,8 +26,14 @@ def ask_ai(prompt):
     data = {
         "model": "openai/gpt-3.5-turbo",
         "messages": [
-            {"role": "system", "content": "You are a friendly Discord chatbot."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are a friendly Discord chatbot."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
         ]
     }
 
@@ -56,6 +62,7 @@ async def on_ready():
 @tree.command(name="gay", description="Check how gay someone is")
 async def gay(interaction: discord.Interaction, user: discord.Member):
     percent = random.randint(0, 100)
+
     await interaction.response.send_message(
         f"{user.mention} is {percent}% gay 🌈"
     )
@@ -63,8 +70,9 @@ async def gay(interaction: discord.Interaction, user: discord.Member):
 @tree.command(name="autism", description="Check autism percentage")
 async def autism(interaction: discord.Interaction, user: discord.Member):
     percent = random.randint(0, 100)
+
     await interaction.response.send_message(
-        f"{user.mention} is {percent}% autistic holy frick bro"
+        f"{user.mention} is {percent}% autistic 🧩"
     )
 
 @tree.command(name="ship", description="Ship two users together")
@@ -73,10 +81,19 @@ async def ship(
     user1: discord.Member,
     user2: discord.Member
 ):
-    percent = random.randint(0, 100)
+    # SPECIAL PAIR = ALWAYS 100%
+    special_ids = {
+        1434299997133865030,
+        652988923672395779
+    }
+
+    if {user1.id, user2.id} == special_ids:
+        percent = 100
+    else:
+        percent = random.randint(0, 100)
 
     await interaction.response.send_message(
-        f"Hmm... {user1.mention} + {user2.mention} = {percent}% compatibility, ouhhh shii💖"
+        f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = {percent}% compatibility 👀👀👀"
     )
 
 # -------------------------
@@ -91,26 +108,32 @@ async def on_message(message):
 
     msg = message.content.lower()
 
-    # GIF RESPONSE
+    # -------------------------
+    # SPECIFIC GIF RESPONSE
+    # -------------------------
     if "1508831915568926880/caption.gif" in msg:
         await message.channel.send(
             "pls stop chumeul chwo, sindeullin maxxing"
         )
         return
 
-    # AI ON
+    # -------------------------
+    # AI TOGGLE
+    # -------------------------
     if msg == "ai work":
         ai_enabled = True
-        await message.channel.send("yo hi this me crewmate ai I'm working now🤖")
+        await message.channel.send("hello this me crewmate ai trustt🤖")
+    
         return
 
-    # AI OFF
     if msg == "ai stop":
         ai_enabled = False
-        await message.channel.send("im tired stop abusing me ok bye I'm offline📴")
+        await message.channel.send("stop using me now im tired📴")
         return
 
+    # -------------------------
     # AUTO RESPONSES
+    # -------------------------
     responses = {
         "help": "help is on it’s way",
         "swano": "swano is the goat! leave mah goat alone",
@@ -123,7 +146,9 @@ async def on_message(message):
             await message.channel.send(reply)
             return
 
+    # -------------------------
     # AI CHAT
+    # -------------------------
     if ai_enabled:
         reply = ask_ai(message.content)
         await message.channel.send(reply)
