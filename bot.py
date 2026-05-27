@@ -140,9 +140,9 @@ async def on_message(message):
         user = message.mentions[0]
 
         glaze_lines = [
-            f"{user.display_name} is actually insane fr 😭🔥",
-            f"nahhh {user.display_name} is HIM 💀",
-            f"bro is built different no cap 👀",
+            f"{user.display_name} boiii u soo tuff u my little comet!",
+            f"if i catch someone talking bad bout {user.display_name} im boutta give em a knuckle sandwhich!",
+            f"ur coding IS for the welcome!",
             f"everyone bow down to {user.display_name} 🙏",
             f"{user.display_name} = main character energy 💯"
         ]
