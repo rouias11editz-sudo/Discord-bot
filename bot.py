@@ -100,11 +100,26 @@ async def ship(interaction: discord.Interaction, user1: discord.Member, user2: d
 @tree.command(name="guess_number")
 async def guess_number(interaction: discord.Interaction):
 
-    game_state[interaction.channel.id] = random.randint(1, 100)
+    game_state[interaction.channel.id] = {
+        "answer": random.randint(1, 100),
+        "attempts": 10
+    }
 
     await interaction.response.send_message(
-        "🎮 Guess the number (1-100)! Type your guesses in chat."
+        "🎮 Guess the number (1-100)!\n⏰ You have 1 minute and 10 attempts."
     )
+
+    await asyncio.sleep(60)
+
+    if interaction.channel.id in game_state:
+
+        answer = game_state[interaction.channel.id]["answer"]
+
+        await interaction.channel.send(
+            f"⏰ time's up!! the number was **{answer}**"
+        )
+
+        del game_state[interaction.channel.id]
 
 # -------------------------
 # MESSAGE EVENTS
@@ -128,20 +143,56 @@ async def on_message(message):
         if message.content.isdigit():
 
             guess = int(message.content)
-            answer = game_state[channel_id]
 
+            # WARNING IF ABOVE 100
+            if guess > 100:
+
+                await message.channel.send(
+                    "🚨 bro the number is ONLY between 1-100"
+                )
+
+                return
+
+            game = game_state[channel_id]
+
+            answer = game["answer"]
+
+            game["attempts"] -= 1
+
+            # CORRECT
             if guess == answer:
+
                 await message.channel.send(
                     f"🎉 {message.author.mention} guessed the number!"
                 )
 
                 del game_state[channel_id]
 
+                return
+
+            # NO ATTEMPTS LEFT
+            if game["attempts"] <= 0:
+
+                await message.channel.send(
+                    f"💀 no attempts left! the number was **{answer}**"
+                )
+
+                del game_state[channel_id]
+
+                return
+
+            # HIGHER / LOWER
             elif guess < answer:
-                await message.channel.send("⬆️ higher")
+
+                await message.channel.send(
+                    f"⬆️ higher ({game['attempts']} attempts left)"
+                )
 
             else:
-                await message.channel.send("⬇️ lower")
+
+                await message.channel.send(
+                    f"⬇️ lower ({game['attempts']} attempts left)"
+                )
 
             return
 
@@ -196,10 +247,13 @@ async def on_message(message):
     }
 
     if message.author.id in allowed_spammers and msg.startswith("spam "):
+
         spam_text = message.content[5:]
 
         for i in range(5):
+
             await message.channel.send(spam_text)
+
             await asyncio.sleep(0.6)
 
         return
@@ -223,6 +277,7 @@ async def on_message(message):
     }
 
     for key, reply in responses.items():
+
         if key in msg:
 
             embed = discord.Embed(
@@ -231,19 +286,23 @@ async def on_message(message):
             )
 
             embed.set_author(
-                name="i love swano",
+                name="AUTO RESPONSE",
                 icon_url=message.author.display_avatar.url
             )
 
             await message.channel.send(embed=embed)
+
             return
 
     # -------------------------
     # AI CHAT
     # -------------------------
     if ai_enabled:
+
         reply = ask_ai(message.content)
+
         await message.channel.send(reply)
+
         return
 
 client.run(os.getenv("TOKEN"))
