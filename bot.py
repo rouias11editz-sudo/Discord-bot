@@ -67,7 +67,11 @@ def ask_ai(prompt):
 @client.event
 async def on_ready():
     await tree.sync()
+
+    synced = await tree.sync()
+
     print(f"logged in as {client.user}")
+    print(f"synced {len(synced)} commands")
 
 # -------------------------
 # SLASH COMMANDS
