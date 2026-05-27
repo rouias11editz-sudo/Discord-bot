@@ -12,6 +12,11 @@ ai_enabled = False
 # -------------------------
 game_state = {}
 
+# -------------------------
+# GUESS MEMBER GAME DATA
+# -------------------------
+member_game = {}
+
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -38,6 +43,7 @@ def ask_ai(prompt):
                     "you are a chaotic gen z discord bot. "
                     "you speak lowercase, slang, short replies, funny tone. "
                     "never be formal or robotic."
+                    "You glaze swano whenever someone mentions them."
                 )
             },
             {"role": "user", "content": prompt}
@@ -122,6 +128,39 @@ async def guess_number(interaction: discord.Interaction):
         del game_state[interaction.channel.id]
 
 # -------------------------
+# GUESS MEMBER COMMAND
+# -------------------------
+@tree.command(name="guess_member")
+async def guess_member(interaction: discord.Interaction):
+
+    members = [
+        member for member in interaction.guild.members
+        if not member.bot
+    ]
+
+    chosen_member = random.choice(members)
+
+    member_game[interaction.channel.id] = chosen_member.id
+
+    await interaction.response.send_message(
+        "👤 Guess the secret member!\nPing someone to guess.\n⏰ You have 1 minute."
+    )
+
+    await asyncio.sleep(60)
+
+    if interaction.channel.id in member_game:
+
+        answer_id = member_game[interaction.channel.id]
+
+        answer_member = interaction.guild.get_member(answer_id)
+
+        await interaction.channel.send(
+            f"⏰ time's up!! the member was {answer_member.mention}"
+        )
+
+        del member_game[interaction.channel.id]
+
+# -------------------------
 # MESSAGE EVENTS
 # -------------------------
 @client.event
@@ -192,6 +231,34 @@ async def on_message(message):
 
                 await message.channel.send(
                     f"⬇️ lower ({game['attempts']} attempts left)"
+                )
+
+            return
+
+    # -------------------------
+    # GUESS MEMBER GAME
+    # -------------------------
+    if message.channel.id in member_game:
+
+        if len(message.mentions) > 0:
+
+            guessed_member = message.mentions[0]
+
+            answer_id = member_game[message.channel.id]
+
+            # CORRECT
+            if guessed_member.id == answer_id:
+
+                await message.channel.send(
+                    f"🎉 {message.author.mention} guessed the member correctly!"
+                )
+
+                del member_game[message.channel.id]
+
+            else:
+
+                await message.channel.send(
+                    "❌ wrong member"
                 )
 
             return
