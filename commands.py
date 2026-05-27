@@ -328,11 +328,109 @@ def setup_commands(tree, client):
         embed = discord.Embed(
             title="🛒 swucks shop",
             description=(
-                "🐱 **swano meowing VM** — 500 swucks\n\n"
-                "🎨 **custom role** — 30 swucks\n\n"
-                "😈 **dare swano to do anything** — 1000 swucks"
+                "#1 🐱 **swano meowing VM** — 500 swucks\n\n"
+                "#2 🎨 **custom role** — 30 swucks\n\n"
+                "#3 😈 **dare swano to do anything** — 1000 swucks"
             ),
             color=NAVY
         )
 
         await interaction.response.send_message(embed=embed)
+
+    # -------------------------
+    # BUY
+    # -------------------------
+    @tree.command(name="buy")
+    async def buy(interaction: discord.Interaction, item: str):
+
+        data = load_money()
+
+        user_id = str(interaction.user.id)
+
+        if user_id not in data:
+            data[user_id] = 0
+
+        # ITEM #1
+        if item == "#1":
+
+            cost = 500
+
+            if data[user_id] < cost:
+
+                embed = discord.Embed(
+                    title="💀 broke",
+                    description="you dont have enough swucks",
+                    color=NAVY
+                )
+
+                await interaction.response.send_message(embed=embed)
+
+                return
+
+            data[user_id] -= cost
+
+            save_money(data)
+
+            await interaction.response.send_message(
+                f"<@1434299997133865030> chop chop city boii"
+            )
+
+        # ITEM #2
+        elif item == "#2":
+
+            cost = 30
+
+            if data[user_id] < cost:
+
+                embed = discord.Embed(
+                    title="💀 broke",
+                    description="you dont have enough swucks",
+                    color=NAVY
+                )
+
+                await interaction.response.send_message(embed=embed)
+
+                return
+
+            data[user_id] -= cost
+
+            save_money(data)
+
+            await interaction.response.send_message(
+                f"<@1434299997133865030> custom role purchased 😭"
+            )
+
+        # ITEM #3
+        elif item == "#3":
+
+            cost = 1000
+
+            if data[user_id] < cost:
+
+                embed = discord.Embed(
+                    title="💀 broke",
+                    description="you dont have enough swucks",
+                    color=NAVY
+                )
+
+                await interaction.response.send_message(embed=embed)
+
+                return
+
+            data[user_id] -= cost
+
+            save_money(data)
+
+            await interaction.response.send_message(
+                f"<@1434299997133865030> DARE PURCHASED 😭"
+            )
+
+        else:
+
+            embed = discord.Embed(
+                title="❌ invalid item",
+                description="use #1, #2 or #3",
+                color=NAVY
+            )
+
+            await interaction.response.send_message(embed=embed)
