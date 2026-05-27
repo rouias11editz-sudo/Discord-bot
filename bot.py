@@ -7,6 +7,11 @@ from discord import app_commands
 
 ai_enabled = False
 
+# -------------------------
+# GUESS NUMBER GAME DATA
+# -------------------------
+game_state = {}
+
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -90,6 +95,18 @@ async def ship(interaction: discord.Interaction, user1: discord.Member, user2: d
         )
 
 # -------------------------
+# GUESS NUMBER COMMAND
+# -------------------------
+@tree.command(name="guess_number")
+async def guess_number(interaction: discord.Interaction):
+
+    game_state[interaction.channel.id] = random.randint(1, 100)
+
+    await interaction.response.send_message(
+        "🎮 Guess the number (1-100)! Type your guesses in chat."
+    )
+
+# -------------------------
 # MESSAGE EVENTS
 # -------------------------
 @client.event
@@ -100,6 +117,33 @@ async def on_message(message):
         return
 
     msg = message.content.lower()
+
+    # -------------------------
+    # GUESS NUMBER GAME
+    # -------------------------
+    channel_id = message.channel.id
+
+    if channel_id in game_state:
+
+        if message.content.isdigit():
+
+            guess = int(message.content)
+            answer = game_state[channel_id]
+
+            if guess == answer:
+                await message.channel.send(
+                    f"🎉 {message.author.mention} guessed the number!"
+                )
+
+                del game_state[channel_id]
+
+            elif guess < answer:
+                await message.channel.send("⬆️ higher")
+
+            else:
+                await message.channel.send("⬇️ lower")
+
+            return
 
     # -------------------------
     # OWNER / ADMIN GREETING GIF
@@ -187,7 +231,7 @@ async def on_message(message):
             )
 
             embed.set_author(
-                name="AUTO RESPONSE",
+                name="i love swano",
                 icon_url=message.author.display_avatar.url
             )
 
