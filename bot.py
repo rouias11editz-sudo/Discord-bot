@@ -8,17 +8,14 @@ from discord import app_commands
 ai_enabled = False
 
 # -------------------------
-# GUESS NUMBER GAME DATA
+# GAME DATA
 # -------------------------
 game_state = {}
-
-# -------------------------
-# GUESS MEMBER GAME DATA
-# -------------------------
 member_game = {}
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # IMPORTANT for member guessing
 
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
@@ -41,9 +38,7 @@ def ask_ai(prompt):
                 "role": "system",
                 "content": (
                     "you are a chaotic gen z discord bot. "
-                    "you speak lowercase, slang, short replies, funny tone. "
-                    "never be formal or robotic."
-                    "You glaze swano whenever someone mentions them."
+                    "you speak lowercase, slang, short replies, funny tone."
                 )
             },
             {"role": "user", "content": prompt}
@@ -67,9 +62,7 @@ def ask_ai(prompt):
 @client.event
 async def on_ready():
     await tree.sync()
-
     synced = await tree.sync()
-
     print(f"logged in as {client.user}")
     print(f"synced {len(synced)} commands")
 
@@ -97,11 +90,11 @@ async def ship(interaction: discord.Interaction, user1: discord.Member, user2: d
         (user1.id == 652988923672395779 and user2.id == 1434299997133865030)
     ):
         await interaction.response.send_message(
-            f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = 100% compatibility 👀👀👀"
+            f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = 100% compatibility 👀"
         )
     else:
         await interaction.response.send_message(
-            f"hmm… {user1.mention} + {user2.mention} = {random.randint(0,100)}% compatibility ahaha ig…."
+            f"hmm… {user1.mention} + {user2.mention} = {random.randint(0,100)}%"
         )
 
 # -------------------------
@@ -116,7 +109,7 @@ async def guess_number(interaction: discord.Interaction):
     }
 
     await interaction.response.send_message(
-        "🎮 Guess the number (1-100)!\n⏰ You have 1 minute and 10 attempts."
+        "🎮 Guess the number (1-100)\n⏰ 1 minute + 10 attempts"
     )
 
     await asyncio.sleep(60)
@@ -125,9 +118,13 @@ async def guess_number(interaction: discord.Interaction):
 
         answer = game_state[interaction.channel.id]["answer"]
 
-        await interaction.channel.send(
-            f"⏰ time's up!! the number was **{answer}**"
+        embed = discord.Embed(
+            title="⏰ Time's Up!",
+            description=f"The number was **{answer}**",
+            color=0x1B2B5B
         )
+
+        await interaction.channel.send(embed=embed)
 
         del game_state[interaction.channel.id]
 
@@ -138,29 +135,29 @@ async def guess_number(interaction: discord.Interaction):
 async def guess_member(interaction: discord.Interaction):
 
     members = [
-        member for member in interaction.guild.members
-        if not member.bot
+        m for m in interaction.guild.members if not m.bot
     ]
 
-    chosen_member = random.choice(members)
-
-    member_game[interaction.channel.id] = chosen_member.id
+    chosen = random.choice(members)
+    member_game[interaction.channel.id] = chosen.id
 
     await interaction.response.send_message(
-        "👤 Guess the secret member!\nPing someone to guess.\n⏰ You have 1 minute."
+        "👤 Guess the member!\nType their name (no ping needed)\n⏰ 1 minute"
     )
 
     await asyncio.sleep(60)
 
     if interaction.channel.id in member_game:
 
-        answer_id = member_game[interaction.channel.id]
+        answer = interaction.guild.get_member(member_game[interaction.channel.id])
 
-        answer_member = interaction.guild.get_member(answer_id)
-
-        await interaction.channel.send(
-            f"⏰ time's up!! the member was {answer_member.mention}"
+        embed = discord.Embed(
+            title="⏰ Time's Up!",
+            description=f"It was **{answer.display_name}**",
+            color=0x1B2B5B
         )
+
+        await interaction.channel.send(embed=embed)
 
         del member_game[interaction.channel.id]
 
@@ -179,121 +176,101 @@ async def on_message(message):
     # -------------------------
     # GUESS NUMBER GAME
     # -------------------------
-    channel_id = message.channel.id
-
-    if channel_id in game_state:
+    if message.channel.id in game_state:
 
         if message.content.isdigit():
 
             guess = int(message.content)
+            game = game_state[message.channel.id]
 
-            # WARNING IF ABOVE 100
             if guess > 100:
 
-                await message.channel.send(
-                    "🚨 bro the number is ONLY between 1-100"
-                )
-
+                await message.channel.send("🚨 only 1-100")
                 return
-
-            game = game_state[channel_id]
-
-            answer = game["answer"]
 
             game["attempts"] -= 1
+            answer = game["answer"]
 
-            # CORRECT
             if guess == answer:
 
-                await message.channel.send(
-                    f"🎉 {message.author.mention} guessed the number!"
+                embed = discord.Embed(
+                    title="🎉 Correct!",
+                    description=f"{message.author.mention} got it right!",
+                    color=0x1B2B5B
                 )
 
-                del game_state[channel_id]
-
+                await message.channel.send(embed=embed)
+                del game_state[message.channel.id]
                 return
 
-            # NO ATTEMPTS LEFT
             if game["attempts"] <= 0:
 
-                await message.channel.send(
-                    f"💀 no attempts left! the number was **{answer}**"
+                embed = discord.Embed(
+                    title="💀 Out of attempts!",
+                    description=f"The answer was **{answer}**",
+                    color=0x1B2B5B
                 )
 
-                del game_state[channel_id]
-
+                await message.channel.send(embed=embed)
+                del game_state[message.channel.id]
                 return
 
-            # HIGHER / LOWER
-            elif guess < answer:
-
-                await message.channel.send(
-                    f"⬆️ higher ({game['attempts']} attempts left)"
-                )
-
+            if guess < answer:
+                await message.channel.send(f"⬆️ higher ({game['attempts']} left)")
             else:
-
-                await message.channel.send(
-                    f"⬇️ lower ({game['attempts']} attempts left)"
-                )
+                await message.channel.send(f"⬇️ lower ({game['attempts']} left)")
 
             return
 
     # -------------------------
-# GUESS MEMBER GAME
-# -------------------------
-if message.channel.id in member_game:
+    # GUESS MEMBER GAME
+    # -------------------------
+    if message.channel.id in member_game:
 
-    guessed_text = message.content.lower()
+        guess = message.content.lower()
 
-    answer_id = member_game[message.channel.id]
+        answer_id = member_game[message.channel.id]
+        member = message.guild.get_member(answer_id)
 
-    answer_member = message.guild.get_member(answer_id)
+        if member:
 
-    if answer_member:
+            if guess in member.display_name.lower() or guess in member.name.lower():
 
-        display_name = answer_member.display_name.lower()
-        username = answer_member.name.lower()
+                embed = discord.Embed(
+                    title="🎉 Correct Guess!",
+                    description=f"{message.author.mention} got it!\nIt was **{member.display_name}**",
+                    color=0x1B2B5B
+                )
 
-        # CORRECT IF MESSAGE IS INSIDE NAME
-        if guessed_text in display_name or guessed_text in username:
+                await message.channel.send(embed=embed)
+                del member_game[message.channel.id]
 
-            await message.channel.send(
-                f"🎉 {message.author.mention} guessed the member correctly surprinsgly ok!\n👤 it was **{answer_member.display_name}**"
-            )
+            else:
 
-            del member_game[message.channel.id]
+                embed = discord.Embed(
+                    title="❌ Wrong",
+                    description="not that one 😭",
+                    color=0x1B2B5B
+                )
 
-        else:
-
-            await message.channel.send(
-                "❌ wrong member u fricking idiot oml"
-            )
+                await message.channel.send(embed=embed)
 
         return
+
     # -------------------------
-    # OWNER / ADMIN GREETING GIF
+    # GREETING
     # -------------------------
     is_owner = message.guild and message.author.id == message.guild.owner_id
     is_admin = message.author.guild_permissions.administrator
 
-    greetings = ["hi", "hello", "hey", "yo"]
-
-    if (is_owner or is_admin) and msg in greetings:
+    if (is_owner or is_admin) and msg in ["hi", "hello", "hey", "yo"]:
 
         embed = discord.Embed(
-            description="👋",
-            color=0x4DA6FF
+            description="👋 hi",
+            color=0x1B2B5B
         )
 
-        embed.set_image(
-            url="https://media.tenor.com/crtsfiles-juhoon-cortis-hi-waving/0.gif"
-        )
-
-        embed.set_author(
-            name=f"Greetings from {message.author.display_name}",
-            icon_url=message.author.display_avatar.url
-        )
+        embed.set_image(url="https://media.tenor.com/crtsfiles-juhoon-cortis-hi-waving/0.gif")
 
         await message.channel.send(embed=embed)
         return
@@ -303,16 +280,16 @@ if message.channel.id in member_game:
     # -------------------------
     if msg == "ai work":
         ai_enabled = True
-        await message.channel.send("yoo its me crewmate ai wsg!! send a message to speak")
+        await message.channel.send("ai on")
         return
 
     if msg == "ai stop":
         ai_enabled = False
-        await message.channel.send("baaalright, im gone now bai")
+        await message.channel.send("ai off")
         return
 
     # -------------------------
-    # SPAM COMMAND
+    # SPAM
     # -------------------------
     allowed_spammers = {
         1208382519611760670,
@@ -323,33 +300,31 @@ if message.channel.id in member_game:
 
     if message.author.id in allowed_spammers and msg.startswith("spam "):
 
-        spam_text = message.content[5:]
+        text = message.content[5:]
 
-        for i in range(5):
-
-            await message.channel.send(spam_text)
-
+        for _ in range(5):
+            await message.channel.send(text)
             await asyncio.sleep(0.6)
 
         return
 
     # -------------------------
-    # AUTO RESPONSES (EMBEDS)
+    # AUTO RESPONSES
     # -------------------------
     responses = {
-        "help": "help is on it’s way",
-        "swano": "swano is the goat! leave mah goat alone",
-        "venus": "venus is swano’s mommy, swano needs mama mwilkies",
-        "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)",
-        "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
-        "sean": "ouhh my eom freakk 😋😋😝😝 give me one chance seannnn",
-        "keonho": "did you just talk about the cutest and gayest member of the group? Thats tuff dayummm",
-        "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON, SJAIOAKXXK THAT’S SWANO’s HUBBY JUHOON",
-        "martin": "Those holy predatory eyes 👀 👀",
-        "james": "WANNA SEE MY HELICOPTER??? 🚁",
-        "gojo": "are you 19+??? gojo is mah goat",
-        "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀"
-    }
+    "help": "help is on it’s way",
+    "swano": "swano is the goat! leave mah goat alone",
+    "venus": "venus is swano’s mommy, swano needs mama mwilkies",
+    "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)",
+    "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
+    "sean": "ouhh my eom freakk 😋😋😝😝 give me one chance seannnn",
+    "keonho": "did you just talk about the cutest and gayest member of the group? Thats tuff dayummm",
+    "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON, SJAIOAKXXK THAT’S SWANO’s HUBBY JUHOON",
+    "martin": "Those holy predatory eyes 👀 👀",
+    "james": "WANNA SEE MY HELICOPTER??? 🚁",
+    "gojo": "are you 19+??? gojo is mah goat",
+    "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀"
+}
 
     for key, reply in responses.items():
 
@@ -357,27 +332,17 @@ if message.channel.id in member_game:
 
             embed = discord.Embed(
                 description=reply,
-                color=0x4DA6FF
-            )
-
-            embed.set_author(
-                name="AUTO RESPONSE",
-                icon_url=message.author.display_avatar.url
+                color=0x1B2B5B
             )
 
             await message.channel.send(embed=embed)
-
             return
 
     # -------------------------
     # AI CHAT
     # -------------------------
     if ai_enabled:
-
         reply = ask_ai(message.content)
-
         await message.channel.send(reply)
-
-        return
 
 client.run(os.getenv("TOKEN"))
