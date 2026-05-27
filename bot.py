@@ -2,6 +2,7 @@ import discord
 import os
 import requests
 import random
+import asyncio
 from discord import app_commands
 
 ai_enabled = False
@@ -32,7 +33,6 @@ def ask_ai(prompt):
                     "you are crewmate ai, a chaotic gen z discord bot. "
                     "you ONLY speak in lowercase. "
                     "you use slang naturally and act funny and unserious. "
-                    "say things like bro, ngl, cooked, wild, goofy, nahhh, HELP, fr 😭💀🔥. "
                     "keep replies short and casual. "
                     "never sound formal or robotic."
                 )
@@ -50,7 +50,6 @@ def ask_ai(prompt):
         json=data
     )
 
-    # SHOW REAL ERROR
     if response.status_code != 200:
         return f"{response.status_code} | {response.text}"
 
@@ -70,41 +69,27 @@ async def on_ready():
 @tree.command(name="gay", description="check how gay someone is")
 async def gay(interaction: discord.Interaction, user: discord.Member):
     percent = random.randint(0, 100)
-
-    await interaction.response.send_message(
-        f"{user.mention} is {percent}% gay 🌈"
-    )
+    await interaction.response.send_message(f"{user.mention} is {percent}% gay 🌈")
 
 @tree.command(name="autism", description="check autism percentage")
 async def autism(interaction: discord.Interaction, user: discord.Member):
     percent = random.randint(0, 100)
-
-    await interaction.response.send_message(
-        f"{user.mention} is {percent}% autistic 🧩"
-    )
+    await interaction.response.send_message(f"{user.mention} is {percent}% autistic 🧩")
 
 @tree.command(name="ship", description="ship two users together")
-async def ship(
-    interaction: discord.Interaction,
-    user1: discord.Member,
-    user2: discord.Member
-):
+async def ship(interaction: discord.Interaction, user1: discord.Member, user2: discord.Member):
 
-    # SPECIAL USERS
     if (
         (user1.id == 1434299997133865030 and user2.id == 652988923672395779)
         or
         (user1.id == 652988923672395779 and user2.id == 1434299997133865030)
     ):
         percent = 100
-
         await interaction.response.send_message(
             f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = {percent}% compatibility 👀👀👀"
         )
-
     else:
         percent = random.randint(0, 100)
-
         await interaction.response.send_message(
             f"hmm… {user1.mention} + {user2.mention} = {percent}% compatibility ahaha ig…."
         )
@@ -125,9 +110,7 @@ async def on_message(message):
     # GIF RESPONSE
     # -------------------------
     if "1508831915568926880/caption.gif" in msg:
-        await message.channel.send(
-            "pls stop chumeul chwo, sindeullin maxxing"
-        )
+        await message.channel.send("pls stop chumeul chwo, sindeullin maxxing")
         return
 
     # -------------------------
@@ -135,10 +118,7 @@ async def on_message(message):
     # -------------------------
     if msg == "ai work":
         ai_enabled = True
-
-        await message.channel.send(
-            "yoo its me crewmate ai wsg!! send a message to speak"
-        )
+        await message.channel.send("yoo its me crewmate ai wsg!! send a message to speak")
         return
 
     # -------------------------
@@ -146,10 +126,26 @@ async def on_message(message):
     # -------------------------
     if msg == "ai stop":
         ai_enabled = False
+        await message.channel.send("baaalright, im gone now bai")
+        return
 
-        await message.channel.send(
-            "baaalright, im gone now bai"
-        )
+    # -------------------------
+    # SPAM COMMAND (MEDIUM FAST)
+    # -------------------------
+    allowed_spammers = {
+        1208382519611760670,
+        1434299997133865030,
+        652988923672395779,
+        1148948508481699850
+    }
+
+    if message.author.id in allowed_spammers and msg.startswith("spam "):
+        spam_text = message.content[5:]
+
+        for i in range(5):
+            await message.channel.send(spam_text)
+            await asyncio.sleep(0.6)
+
         return
 
     # -------------------------
@@ -157,29 +153,17 @@ async def on_message(message):
     # -------------------------
     responses = {
         "help": "help is on it’s way",
-
         "swano": "swano is the goat! leave mah goat alone",
-
         "venus": "venus is swano’s mommy, swano needs mama mwilkies",
-
         "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)",
-
         "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
-
         "sean": "ouhh my eom freakk 😋😋😝😝 give me one chance seannnn",
-
         "keonho": "did you just talk about the cutest and gayest member of the group? Thats tuff dayummm",
-
         "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON, SJAIOAKXXK THAT’S SWANO’s HUBBY JUHOON",
-
         "martin": "Those holy predatory eyes 👀 👀",
-
-        "james": "WANNA SEE MY HELICOPTER??? 🚁",
-        
+        "james": "WANNA SEE MY HELICOPTER??? 🚁", 
         "gojo": "are you 19+??? gojo is mah goat",
-        
         "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀"
-        
     }
 
     for key, reply in responses.items():
