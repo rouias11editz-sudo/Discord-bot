@@ -112,13 +112,13 @@ async def on_message(message):
     if (is_owner or is_admin) and msg in greetings:
 
         embed = discord.Embed(
-            description="👋",
+            description="is that a swano glazer in the chat",
             color=0x4DA6FF
         )
 
         embed.set_image(
-            url="https://media.tenor.com/crtsfiles-juhoon-cortis-hi-waving/0.gif"
-        )
+    url="https://media.tenor.com/MY_ULOc6jpcAAAPo/crtsfiles-juhoon.mp4"
+)
 
         embed.set_author(
             name=f"Greetings from {message.author.display_name}",
