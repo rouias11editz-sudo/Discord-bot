@@ -156,13 +156,26 @@ async def on_message(message):
     # AUTO RESPONSES
     # -------------------------
     responses = {
-        "help": "help is on it’s way",
-        "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
-        "swano": "swano is the goat! leave mah goat alone",
-        "venus": "venus is swano’s mommy, swano needs mama mwilkies",
-        "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)"
-    }
+    "help": "help is on it’s way",
 
+    "swano": "swano is the goat! leave mah goat alone",
+
+    "venus": "venus is swano’s mommy, swano needs mama mwilkies",
+
+    "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)",
+
+    "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
+
+    "sean": "ouhh my eom freakk 😋😋😝😝 give me one chance seannnn",
+
+    "keonho": "did you just talk about the cutest and gayest member of the group? Thats tuff dayummm",
+
+    "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON, SJAIOAKXXK THAT’S SWANO’s HUBBY JUHOON",
+
+    "martin": "Those holy predatory eyes 👀 👀",
+
+    "james": "WANNA SEE MY HELICOPTER??? 🚁"
+}
     for key, reply in responses.items():
         if key in msg:
             await message.channel.send(reply)
