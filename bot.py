@@ -81,19 +81,26 @@ async def ship(
     user1: discord.Member,
     user2: discord.Member
 ):
-    # SPECIAL PAIR = ALWAYS 100%
+    # SPECIAL PAIR IDS
     special_ids = {
         1434299997133865030,
         652988923672395779
     }
 
+    # SPECIAL SHIP MESSAGE
     if {user1.id, user2.id} == special_ids:
         percent = 100
-    else:
-        percent = random.randint(0, 100)
+
+        await interaction.response.send_message(
+            f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = {percent}% compatibility 👀👀👀"
+        )
+        return
+
+    # NORMAL SHIP MESSAGE
+    percent = random.randint(0, 100)
 
     await interaction.response.send_message(
-        f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = {percent}% compatibility 👀👀👀"
+        f"hmm… {user1.mention} + {user2.mention} = {percent}% compatibility ahaha ig…."
     )
 
 # -------------------------
@@ -122,13 +129,12 @@ async def on_message(message):
     # -------------------------
     if msg == "ai work":
         ai_enabled = True
-        await message.channel.send("hello this me crewmate ai trustt🤖")
-    
+        await message.channel.send("yoo its me crewmate ai watchu need")
         return
 
     if msg == "ai stop":
         ai_enabled = False
-        await message.channel.send("stop using me now im tired📴")
+        await message.channel.send("k im logging off bai 📴")
         return
 
     # -------------------------
