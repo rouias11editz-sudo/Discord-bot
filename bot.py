@@ -157,6 +157,7 @@ async def on_message(message):
     # -------------------------
     responses = {
         "help": "help is on it’s way",
+        "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
         "swano": "swano is the goat! leave mah goat alone",
         "venus": "venus is swano’s mommy, swano needs mama mwilkies",
         "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet)"
