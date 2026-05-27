@@ -176,7 +176,10 @@ async def on_message(message):
 
         "james": "WANNA SEE MY HELICOPTER??? 🚁",
         
-        "gojo": "are you 19+??? gojo is mah goat"
+        "gojo": "are you 19+??? gojo is mah goat",
+        
+        "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀"
+        
     }
 
     for key, reply in responses.items():
