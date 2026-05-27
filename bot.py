@@ -1,8 +1,10 @@
 import discord
 import os
-from discord import app_commands
+import requests
 
+from discord import app_commands
 from commands import setup_commands
+from events import setup_events
 
 # -------------------------
 # INTENTS
@@ -15,27 +17,72 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 # -------------------------
-# SHARED DATA (IMPORTANT)
+# AI FUNCTION (GLOBAL)
+# -------------------------
+def ask_ai(prompt):
+
+    headers = {
+        "Authorization": "Bearer " + os.getenv("OPENROUTER_API_KEY"),
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://discordbot.local",
+        "X-Title": "Crewmate AI"
+    }
+
+    data = {
+        "model": "openai/gpt-3.5-turbo",
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "you are a chaotic gen z discord bot. "
+                    "you speak lowercase, slang, short replies, funny tone."
+                )
+            },
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    r = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers=headers,
+        json=data
+    )
+
+    if r.status_code != 200:
+        return f"{r.status_code} | {r.text}"
+
+    return r.json()["choices"][0]["message"]["content"]
+
+# -------------------------
+# SHARE AI WITH EVENTS
+# -------------------------
+client.ask_ai = ask_ai
+client.ai_enabled = False
+
+# -------------------------
+# GAME STORAGE (GLOBAL)
 # -------------------------
 client.game_state = {}
 client.member_game = {}
-client.openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
 # -------------------------
-# LOAD COMMANDS
+# SETUP COMMANDS + EVENTS
 # -------------------------
 setup_commands(tree, client)
+setup_events(client)
 
 # -------------------------
-# READY
+# READY EVENT
 # -------------------------
 @client.event
 async def on_ready():
+
     await tree.sync()
+
     print(f"logged in as {client.user}")
     print("bot is online 🚀")
 
 # -------------------------
-# RUN
+# RUN BOT
 # -------------------------
 client.run(os.getenv("TOKEN"))
