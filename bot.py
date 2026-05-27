@@ -81,28 +81,26 @@ async def ship(
     user1: discord.Member,
     user2: discord.Member
 ):
-    # SPECIAL PAIR IDS
-    special_ids = {
-        1434299997133865030,
-        652988923672395779
-    }
 
-    # SPECIAL SHIP MESSAGE
-    if {user1.id, user2.id} == special_ids:
+    # NORMAL RANDOM %
+    percent = random.randint(0, 100)
+
+    # SPECIAL USERS
+    if (
+        (user1.id == 1434299997133865030 and user2.id == 652988923672395779)
+        or
+        (user1.id == 652988923672395779 and user2.id == 1434299997133865030)
+    ):
         percent = 100
 
         await interaction.response.send_message(
             f"ouhh swanus mentioned?? {user1.mention} + {user2.mention} = {percent}% compatibility 👀👀👀"
         )
-        return
 
-    # NORMAL SHIP MESSAGE
-    percent = random.randint(0, 100)
-
-    await interaction.response.send_message(
-        f"hmm… {user1.mention} + {user2.mention} = {percent}% compatibility ahaha ig…."
-    )
-
+    else:
+        await interaction.response.send_message(
+            f"hmm… {user1.mention} + {user2.mention} = {percent}% compatibility ahaha ig…."
+        )
 # -------------------------
 # MESSAGE EVENTS
 # -------------------------
