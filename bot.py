@@ -136,7 +136,8 @@ async def on_message(message):
         1208382519611760670,
         1434299997133865030,
         652988923672395779,
-        1148948508481699850
+        1148948508481699850,
+        468993210908409856
     }
 
     if message.author.id in allowed_spammers and msg.startswith("spam "):
