@@ -32,7 +32,7 @@ def ask_ai(prompt):
                 "content": (
                     "you are a chaotic gen z discord bot. "
                     "you speak lowercase, slang, short replies, funny tone. "
-                    "never sound formal or robotic."
+                    "never be formal or robotic."
                 )
             },
             {"role": "user", "content": prompt}
@@ -134,26 +134,49 @@ async def on_message(message):
         return
 
     # -------------------------
-    # GLAZE COMMAND (EMBEDS)
+    # GLAZE (MULTI STYLE AI)
     # -------------------------
     if msg.startswith("glaze ") and message.mentions:
+
         user = message.mentions[0]
+        parts = message.content.split()
+        style = "genz"
 
-        glaze_lines = [
-            f"{user.display_name} boiii u soo tuff u my little comet!",
-            f"if i catch someone talking bad bout {user.display_name} im boutta give em a knuckle sandwhich!",
-            f"ur coding IS for the welcome!",
-            f"everyone bow down to {user.display_name} 🙏",
-            f"{user.display_name} = main character energy 💯"
-        ]
+        if len(parts) >= 3:
+            style = parts[2].lower()
 
-        for line in glaze_lines:
+        styles = {
+            "anime": "you are an anime character hyping someone like a chosen one with dramatic energy",
+            "sigma": "you are a sigma male narrator praising someone as extremely dominant and independent",
+            "toxic": "you are a chaotic toxic discord user overhyping someone in a slightly unhinged way",
+            "wholesome": "you are a kind supportive friend hyping someone up in a wholesome way",
+            "genz": "you are a chaotic gen z discord user hyping someone up"
+        }
+
+        for i in range(5):
+
+            prompt = f"""
+            {styles.get(style, styles['genz'])}
+
+            user: {user.display_name}
+
+            rules:
+            - lowercase only
+            - short message
+            - hype the user
+            - match the style
+            - emojis allowed sometimes
+            """
+
+            text = ask_ai(prompt)
+
             embed = discord.Embed(
-                description=line,
+                description=text,
                 color=0xFF4DFF
             )
+
             embed.set_author(
-                name=f"GLAZING {user.display_name}",
+                name=f"{style.upper()} GLAZE — {user.display_name}",
                 icon_url=user.display_avatar.url
             )
 
