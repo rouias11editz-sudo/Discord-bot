@@ -28,7 +28,12 @@ def ask_ai(prompt):
         "messages": [
             {
                 "role": "system",
-                "content": "You are a friendly Discord chatbot."
+                "content": (
+                    "You are a funny Gen Z Discord bot. "
+                    "You talk casually in lowercase, use slang naturally, "
+                    "act chaotic but friendly, and keep replies short. "
+                    "Avoid sounding formal or robotic."
+                )
             },
             {
                 "role": "user",
@@ -81,10 +86,6 @@ async def ship(
     user1: discord.Member,
     user2: discord.Member
 ):
-
-    # NORMAL RANDOM %
-    percent = random.randint(0, 100)
-
     # SPECIAL USERS
     if (
         (user1.id == 1434299997133865030 and user2.id == 652988923672395779)
@@ -98,9 +99,12 @@ async def ship(
         )
 
     else:
+        percent = random.randint(0, 100)
+
         await interaction.response.send_message(
             f"hmm… {user1.mention} + {user2.mention} = {percent}% compatibility ahaha ig…."
         )
+
 # -------------------------
 # MESSAGE EVENTS
 # -------------------------
@@ -114,7 +118,7 @@ async def on_message(message):
     msg = message.content.lower()
 
     # -------------------------
-    # SPECIFIC GIF RESPONSE
+    # GIF RESPONSE
     # -------------------------
     if "1508831915568926880/caption.gif" in msg:
         await message.channel.send(
@@ -123,16 +127,25 @@ async def on_message(message):
         return
 
     # -------------------------
-    # AI TOGGLE
+    # AI ON
     # -------------------------
     if msg == "ai work":
         ai_enabled = True
-        await message.channel.send("yoo its me crewmate ai watchu need")
+
+        await message.channel.send(
+            "yoo its me crewmate ai wsg!! send a message to speak"
+        )
         return
 
+    # -------------------------
+    # AI OFF
+    # -------------------------
     if msg == "ai stop":
         ai_enabled = False
-        await message.channel.send("k im logging off bai 📴")
+
+        await message.channel.send(
+            "baaalright, im gone now bai"
+        )
         return
 
     # -------------------------
