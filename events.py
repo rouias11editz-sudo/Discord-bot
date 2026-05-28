@@ -1,9 +1,46 @@
 import discord
 import asyncio
 import json
+import random
+import time
 
 NAVY = 0x1B2B5B
 
+# -------------------------
+# COOLDOWNS
+# -------------------------
+daily_cooldown = {}
+work_cooldown = {}
+
+# -------------------------
+# MONEY FUNCTIONS
+# -------------------------
+def load_money():
+
+    with open("money.json", "r") as f:
+        return json.load(f)
+
+def save_money(data):
+
+    with open("money.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+# -------------------------
+# LEVEL FUNCTIONS
+# -------------------------
+def load_levels():
+
+    with open("levels.json", "r") as f:
+        return json.load(f)
+
+def save_levels(data):
+
+    with open("levels.json", "w") as f:
+        json.dump(data, f, indent=4)
+
+# -------------------------
+# EVENTS
+# -------------------------
 def setup_events(client):
 
     @client.event
@@ -14,23 +51,123 @@ def setup_events(client):
 
         msg = message.content.lower()
 
-        channel_id = message.channel.id
+        user_id = str(message.author.id)
 
         # -------------------------
-        # GUESS NUMBER GAME
+        # LEVEL SYSTEM
         # -------------------------
-        if channel_id in client.game_state:
+        levels = load_levels()
 
-            if message.content.isdigit():
+        if user_id not in levels:
 
-                guess = int(message.content)
+            levels[user_id] = {
+                "messages": 0,
+                "level": 0
+            }
 
-                # WARNING IF ABOVE 100
-                if guess > 100:
+        levels[user_id]["messages"] += 1
+
+        if levels[user_id]["messages"] >= 150:
+
+            levels[user_id]["messages"] = 0
+            levels[user_id]["level"] += 1
+
+            level = levels[user_id]["level"]
+
+            unlocks = {
+                1: "🧹 Janitor",
+                5: "☕ Barista",
+                10: "🚔 Police Officer",
+                15: "🔥 Firefighter",
+                20: "👨‍🍳 Chef",
+                25: "🩺 Doctor",
+                30: "💼 CEO"
+            }
+
+            embed = discord.Embed(
+                title="🎉 LEVEL UP",
+                description=f"you reached level **{level}**",
+                color=NAVY
+            )
+
+            if level in unlocks:
+
+                embed.add_field(
+                    name="NEW JOB UNLOCKED",
+                    value=unlocks[level],
+                    inline=False
+                )
+
+            await message.channel.send(embed=embed)
+
+        save_levels(levels)
+
+        # -------------------------
+        # AI TOGGLE
+        # -------------------------
+        if msg == "ai work":
+
+            client.ai_enabled = True
+
+            embed = discord.Embed(
+                title="🤖 AI ENABLED",
+                description="yoo its me crewmate ai wsg",
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+
+            return
+
+        if msg == "ai stop":
+
+            client.ai_enabled = False
+
+            embed = discord.Embed(
+                title="💤 AI DISABLED",
+                description="baaalright im gone now bai",
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+
+            return
+
+        # -------------------------
+        # BALANCE
+        # -------------------------
+        if msg == "swano balance":
+
+            money = load_money()
+
+            if user_id not in money:
+                money[user_id] = 0
+                save_money(money)
+
+            embed = discord.Embed(
+                title="💰 SWUCKS BALANCE",
+                description=f"you have **{money[user_id]} swucks**",
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+
+            return
+
+        # -------------------------
+        # DAILY
+        # -------------------------
+        if msg == "swano daily":
+
+            current_time = time.time()
+
+            if user_id in daily_cooldown:
+
+                if current_time - daily_cooldown[user_id] < 86400:
 
                     embed = discord.Embed(
-                        title="🚨 invalid number",
-                        description="the number is only between 1-100",
+                        title="⏳ DAILY COOLDOWN",
+                        description="come back tomorrow",
                         color=NAVY
                     )
 
@@ -38,122 +175,313 @@ def setup_events(client):
 
                     return
 
-                game = client.game_state[channel_id]
+            daily_cooldown[user_id] = current_time
 
-                answer = game["answer"]
+            money = load_money()
 
-                game["attempts"] -= 1
+            if user_id not in money:
+                money[user_id] = 0
 
-                # CORRECT
-                if guess == answer:
+            money[user_id] += 250
 
-                    with open("money.json", "r") as f:
-                        data = json.load(f)
+            save_money(money)
 
-                    user_id = str(message.author.id)
+            embed = discord.Embed(
+                title="🎁 DAILY REWARD",
+                description="+250 swucks",
+                color=NAVY
+            )
 
-                    if user_id not in data:
-                        data[user_id] = 0
+            await message.channel.send(embed=embed)
 
-                    data[user_id] += 50
+            return
 
-                    with open("money.json", "w") as f:
-                        json.dump(data, f, indent=4)
+        # -------------------------
+        # WORK
+        # -------------------------
+        if msg == "swano work":
+
+            current_time = time.time()
+
+            if user_id in work_cooldown:
+
+                if current_time - work_cooldown[user_id] < 1800:
 
                     embed = discord.Embed(
-                        title="🎉 correct!",
-                        description=(
-                            f"{message.author.mention} guessed the number!\n\n"
-                            "💰 +50 swucks"
-                        ),
+                        title="⏳ WORK COOLDOWN",
+                        description="wait 30 minutes",
                         color=NAVY
                     )
 
                     await message.channel.send(embed=embed)
-
-                    del client.game_state[channel_id]
 
                     return
 
-                # NO ATTEMPTS LEFT
-                if game["attempts"] <= 0:
+            work_cooldown[user_id] = current_time
 
-                    embed = discord.Embed(
-                        title="💀 no attempts left",
-                        description=f"the number was **{answer}**",
-                        color=NAVY
-                    )
+            level = levels[user_id]["level"]
 
-                    await message.channel.send(embed=embed)
+            jobs = [
+                (30, "💼 CEO", 50, "you fired 37 employees today"),
+                (25, "🩺 Doctor", 40, "you diagnosed someone with skill issue"),
+                (20, "👨‍🍳 Chef", 30, "you burned 4 steaks"),
+                (15, "🔥 Firefighter", 25, "you saved a cat from a microwave"),
+                (10, "🚔 Police Officer", 15, "you arrested a raccoon"),
+                (5, "☕ Barista", 8, "you misspelled 14 starbucks names"),
+                (1, "🧹 Janitor", 3, "you unclogged the school toilet")
+            ]
 
-                    del client.game_state[channel_id]
+            chosen_job = None
 
-                    return
+            for req, name, pay, text in jobs:
 
-                # HIGHER
-                elif guess < answer:
+                if level >= req:
+                    chosen_job = (name, pay, text)
+                    break
 
-                    embed = discord.Embed(
-                        title="⬆️ higher",
-                        description=f"{game['attempts']} attempts left",
-                        color=NAVY
-                    )
+            if not chosen_job:
 
-                    await message.channel.send(embed=embed)
+                embed = discord.Embed(
+                    title="❌ NO JOB UNLOCKED",
+                    description="reach level 1 first",
+                    color=NAVY
+                )
 
-                # LOWER
-                else:
-
-                    embed = discord.Embed(
-                        title="⬇️ lower",
-                        description=f"{game['attempts']} attempts left",
-                        color=NAVY
-                    )
-
-                    await message.channel.send(embed=embed)
+                await message.channel.send(embed=embed)
 
                 return
 
+            name, pay, text = chosen_job
+
+            money = load_money()
+
+            if user_id not in money:
+                money[user_id] = 0
+
+            money[user_id] += pay
+
+            save_money(money)
+
+            embed = discord.Embed(
+                title=name,
+                description=f"{text}\n\n💰 +{pay} swucks",
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+
+            return
+
         # -------------------------
-        # GUESS MEMBER GAME
+        # SHOP
         # -------------------------
-        if channel_id in client.member_game:
+        if msg == "swano shop":
 
-            correct_member_id = client.member_game[channel_id]
+            embed = discord.Embed(
+                title="🛒 SWUCKS SHOP",
+                description=(
+                    "#1 🐱 Swano Meowing VM — 500 swucks\n\n"
+                    "#2 🎨 Custom Role — 30 swucks\n\n"
+                    "#3 😈 Dare Swano To Do Anything — 1000 swucks"
+                ),
+                color=NAVY
+            )
 
-            correct_member = message.guild.get_member(correct_member_id)
+            await message.channel.send(embed=embed)
 
-            if correct_member:
+            return
 
-                if msg == correct_member.display_name.lower():
+        # -------------------------
+# BUY
+# -------------------------
+if msg.startswith("swano buy"):
 
-                    with open("money.json", "r") as f:
-                        data = json.load(f)
+    split = msg.split()
 
-                    user_id = str(message.author.id)
+    if len(split) < 3:
+        return
 
-                    if user_id not in data:
-                        data[user_id] = 0
+    item = split[2]
 
-                    data[user_id] += 50
+    money = load_money()
 
-                    with open("money.json", "w") as f:
-                        json.dump(data, f, indent=4)
+    if user_id not in money:
+        money[user_id] = 0
 
-                    embed = discord.Embed(
-                        title="🎉 correct!",
-                        description=(
-                            f"{message.author.mention} guessed the member!\n\n"
-                            "💰 +50 swucks"
-                        ),
-                        color=NAVY
-                    )
+    # ITEM #1
+    if item == "#1":
 
-                    await message.channel.send(embed=embed)
+        cost = 500
 
-                    del client.member_game[channel_id]
+        if money[user_id] < cost:
 
-                    return
+            embed = discord.Embed(
+                title="💀 BROKE",
+                description="you dont have enough swucks",
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+
+            return
+
+        money[user_id] -= cost
+
+        save_money(money)
+
+        await message.channel.send(
+            "<@1434299997133865030> chop chop city boii"
+        )
+
+    # ITEM #2
+    elif item == "#2":
+
+        cost = 30
+
+        if money[user_id] < cost:
+
+            embed = discord.Embed(
+                title="💀 LMFAO broke mf",
+                description="you dont have enough swucks",
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+
+            return
+
+        money[user_id] -= cost
+
+        save_money(money)
+
+        await message.channel.send(
+            "<@1434299997133865030> custom role purchased chop chop"
+        )
+
+    # ITEM #3
+    elif item == "#3":
+
+        cost = 1000
+
+        if money[user_id] < cost:
+
+            embed = discord.Embed(
+                title="💀 fucking brokie",
+                description="you dont have enough swucks",
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+
+            return
+
+        money[user_id] -= cost
+
+        save_money(money)
+
+        await message.channel.send(
+            "<@1434299997133865030> chop chop do the dare"
+        )
+
+    return
+
+        # -------------------------
+        # ADMIN GRANT
+        # -------------------------
+        if msg.startswith("swano grant"):
+
+            if not message.author.guild_permissions.administrator:
+
+                embed = discord.Embed(
+                    title="❌ ADMINS ONLY",
+                    color=NAVY
+                )
+
+                await message.channel.send(embed=embed)
+
+                return
+
+            split = message.content.split()
+
+            if len(split) < 4:
+                return
+
+            amount_text = split[2].lower()
+
+            if not amount_text.endswith("sw"):
+                return
+
+            try:
+                amount = int(amount_text.replace("sw", ""))
+
+            except:
+                return
+
+            if amount > 1000:
+
+                embed = discord.Embed(
+                    title="❌ woah calm the max is 1000",
+                    description="max grant is 1000 swucks",
+                    color=NAVY
+                )
+
+                await message.channel.send(embed=embed)
+
+                return
+
+            if len(message.mentions) == 0:
+                return
+
+            target = message.mentions[0]
+
+            money = load_money()
+
+            target_id = str(target.id)
+
+            if target_id not in money:
+                money[target_id] = 0
+
+            money[target_id] += amount
+
+            save_money(money)
+
+            embed = discord.Embed(
+                title="💸 ok its given leave me alone",
+                description=(
+                    f"gave **{amount} swucks** "
+                    f"to {target.mention}"
+                ),
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+
+            return
+
+        # -------------------------
+        # SPAM
+        # -------------------------
+        allowed_spammers = {
+            1208382519611760670,
+            1434299997133865030,
+            652988923672395779,
+            1148948508481699850
+        }
+
+        if (
+            message.author.id in allowed_spammers
+            and msg.startswith("swano spam ")
+        ):
+
+            spam_text = message.content[12:]
+
+            for i in range(5):
+
+                await message.channel.send(spam_text)
+
+                await asyncio.sleep(0.6)
+
+            return
 
         # -------------------------
         # OWNER / ADMIN GREETING
@@ -188,62 +516,6 @@ def setup_events(client):
             return
 
         # -------------------------
-        # AI TOGGLE
-        # -------------------------
-        if msg == "ai work":
-
-            client.ai_enabled = True
-
-            embed = discord.Embed(
-                title="🤖 ai enabled",
-                description="yoo its me crewmate ai wsg!!",
-                color=NAVY
-            )
-
-            await message.channel.send(embed=embed)
-
-            return
-
-        if msg == "ai stop":
-
-            client.ai_enabled = False
-
-            embed = discord.Embed(
-                title="💤 ai disabled",
-                description="baaalright im gone now bai",
-                color=NAVY
-            )
-
-            await message.channel.send(embed=embed)
-
-            return
-
-        # -------------------------
-        # SPAM COMMAND
-        # -------------------------
-        allowed_spammers = {
-            1208382519611760670,
-            1434299997133865030,
-            652988923672395779,
-            1148948508481699850
-        }
-
-        if (
-            message.author.id in allowed_spammers
-            and msg.startswith("spam ")
-        ):
-
-            spam_text = message.content[5:]
-
-            for i in range(5):
-
-                await message.channel.send(spam_text)
-
-                await asyncio.sleep(0.6)
-
-            return
-
-        # -------------------------
         # AUTO RESPONSES
         # -------------------------
         responses = {
@@ -254,7 +526,7 @@ def setup_events(client):
             "jju": "if u're talking bout juhoon then ouhh shiii👀👀 twinkie jju? Ok, dttm, LEAVE.",
             "sean": "ouhh my eom freakk 😋😋😝😝 give me one chance seannnn",
             "keonho": "did you just talk about the cutest and gayest member of the group? Thats tuff dayummm",
-            "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON JUHOON",
+            "juhoon": "OH MY FRICKING GOSH JUHHOON HISKAJSJS JUHOON SWANO'S BABYYY JUHOON",
             "martin": "Those holy predatory eyes 👀 👀",
             "james": "WANNA SEE MY HELICOPTER??? 🚁",
             "gojo": "are you 19+??? gojo is mah goat",
