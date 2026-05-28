@@ -10,7 +10,7 @@ daily_cooldown = {}
 work_cooldown = {}
 
 # -------------------------
-# FILE HELPERS
+# FILE HELPERS (still JSON for now)
 # -------------------------
 def load_money():
     with open("money.json", "r") as f:
@@ -28,8 +28,9 @@ def save_levels(data):
     with open("levels.json", "w") as f:
         json.dump(data, f, indent=4)
 
+
 # -------------------------
-# SETUP
+# SETUP EVENTS
 # -------------------------
 def setup_events(client):
 
@@ -43,7 +44,7 @@ def setup_events(client):
         user_id = str(message.author.id)
 
         # -------------------------
-        # LEVEL SYSTEM
+        # LEVEL SYSTEM (JSON still active)
         # -------------------------
         levels = load_levels()
 
@@ -85,58 +86,6 @@ def setup_events(client):
             return
 
         # -------------------------
-        # 8BALL
-        # -------------------------
-        if msg.startswith("swano 8ball"):
-
-            answers = [
-                "🎱 probably",
-                "🎱 maybe",
-                "🎱 yes",
-                "🎱 no",
-                "🎱 100% yes",
-                "🎱 not happening",
-                "🎱 never",
-                "🎱 ask again later"
-            ]
-
-            question = message.content[12:].strip()
-
-            embed = discord.Embed(
-                title="🎱 8BALL",
-                description=f"**Q:** {question}\n\n**A:** {random.choice(answers)}",
-                color=NAVY
-            )
-
-            await message.channel.send(embed=embed)
-            return
-
-        # -------------------------
-        # LEADERBOARD
-        # -------------------------
-        if msg == "swano leaderboard":
-
-            sorted_users = sorted(
-                levels.items(),
-                key=lambda x: x[1]["level"],
-                reverse=True
-            )[:10]
-
-            desc = ""
-
-            for i, (uid, data) in enumerate(sorted_users, start=1):
-                desc += f"**{i}.** <@{uid}> — level {data['level']}\n"
-
-            embed = discord.Embed(
-                title="🏆 LEADERBOARD",
-                description=desc if desc else "no data yet",
-                color=NAVY
-            )
-
-            await message.channel.send(embed=embed)
-            return
-
-        # -------------------------
         # AI TOGGLE
         # -------------------------
         if msg == "ai work":
@@ -150,7 +99,7 @@ def setup_events(client):
             return
 
         # -------------------------
-        # BALANCE
+        # BALANCE (JSON STILL)
         # -------------------------
         if msg == "swano balance":
 
@@ -210,13 +159,13 @@ def setup_events(client):
             level = levels[user_id]["level"]
 
             jobs = [
-                (30, "💼 CEO", 50, "you fired employees, congrats ure corrupt!"),
-                (25, "🩺 Doctor", 40, "you healed people from mental ilnesses! swano thanks u for making her healthy"),
-                (20, "👨‍🍳 Chef", 30, "you burned water?????"),
-                (15, "🔥 Firefighter", 25, "you saved cats woww such a hero"),
-                (10, "🚔 Police", 15, "you arrested an inflatable boat??} Ok..."),
-                (5, "☕ Barista", 8, "you made coffee w a messed up  name ok!!"),
-                (1, "🧹 Janitor", 3, "you cleaned toilet and got stains on ur hand, wow.")
+                (30, "💼 CEO", 50, "you fired employees"),
+                (25, "🩺 Doctor", 40, "you healed people"),
+                (20, "👨‍🍳 Chef", 30, "you burned food"),
+                (15, "🔥 Firefighter", 25, "you saved cats"),
+                (10, "🚔 Police", 15, "you arrested raccoon"),
+                (5, "☕ Barista", 8, "you made coffee"),
+                (1, "🧹 Janitor", 3, "you cleaned toilet")
             ]
 
             job = None
@@ -256,11 +205,7 @@ def setup_events(client):
 
             embed = discord.Embed(
                 title="🛒 SHOP",
-                description=(
-                    "#1 Swano meowing VM - 500\n"
-                    "#2 Custom role - 30\n"
-                    "#3 Dare swano to do anything - 1000"
-                ),
+                description="#1 VM - 500\n#2 Role - 30\n#3 Dare - 1000",
                 color=NAVY
             )
 
@@ -277,12 +222,13 @@ def setup_events(client):
                 return
 
             item = split[2]
+
             money = load_money()
 
             if user_id not in money:
                 money[user_id] = 0
 
-            def not_enough():
+            def brokie():
                 return discord.Embed(
                     title="💀 BROKIE",
                     description="fricking brokie go get rich",
@@ -292,7 +238,7 @@ def setup_events(client):
             if item == "#1":
 
                 if money[user_id] < 500:
-                    await message.channel.send(embed=not_enough())
+                    await message.channel.send(embed=brokie())
                     return
 
                 money[user_id] -= 500
@@ -304,19 +250,19 @@ def setup_events(client):
             elif item == "#2":
 
                 if money[user_id] < 30:
-                    await message.channel.send(embed=not_enough())
+                    await message.channel.send(embed=brokie())
                     return
 
                 money[user_id] -= 30
                 save_money(money)
 
-                await message.channel.send("<@1434299997133865030> role bought")
+                await message.channel.send("<@1434299997133865030> role purchased")
                 return
 
             elif item == "#3":
 
                 if money[user_id] < 1000:
-                    await message.channel.send(embed=not_enough())
+                    await message.channel.send(embed=brokie())
                     return
 
                 money[user_id] -= 1000
@@ -362,9 +308,7 @@ def setup_events(client):
             money[tid] += amount
             save_money(money)
 
-            await message.channel.send(
-                f"gave {amount} swucks to {target.mention}"
-            )
+            await message.channel.send(f"gave {amount} swucks to {target.mention}")
             return
 
         # -------------------------
@@ -386,4 +330,30 @@ def setup_events(client):
         if client.ai_enabled:
             reply = client.ask_ai(message.content)
             await message.channel.send(reply)
+            return
+
+        # -------------------------
+        # 🧪 SQLITE TEST COMMAND (NEW)
+        # -------------------------
+        if msg == "swano test db":
+
+            import aiosqlite
+
+            async with aiosqlite.connect("swano.db") as db:
+
+                await db.execute("""
+                    CREATE TABLE IF NOT EXISTS test (
+                        user TEXT,
+                        value INTEGER
+                    )
+                """)
+
+                await db.execute("""
+                    INSERT INTO test (user, value)
+                    VALUES (?, ?)
+                """, (str(message.author.id), 1))
+
+                await db.commit()
+
+            await message.channel.send("✅ sqlite works, database is alive")
             return
