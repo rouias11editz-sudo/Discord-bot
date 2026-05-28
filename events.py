@@ -1,32 +1,46 @@
 import discord
 import asyncio
-import json
 import random
 import time
+import aiosqlite
+
+from database import get_level, add_message, level_up
 
 NAVY = 0x1B2B5B
+DB_NAME = "swano.db"
 
 daily_cooldown = {}
 work_cooldown = {}
 
 # -------------------------
-# FILE HELPERS (still JSON for now)
+# SQLITE MONEY
 # -------------------------
-def load_money():
-    with open("money.json", "r") as f:
-        return json.load(f)
+async def get_money(user_id):
 
-def save_money(data):
-    with open("money.json", "w") as f:
-        json.dump(data, f, indent=4)
+    async with aiosqlite.connect(DB_NAME) as db:
 
-def load_levels():
-    with open("levels.json", "r") as f:
-        return json.load(f)
+        async with db.execute(
+            "SELECT money FROM economy WHERE user_id = ?",
+            (str(user_id),)
+        ) as cursor:
 
-def save_levels(data):
-    with open("levels.json", "w") as f:
-        json.dump(data, f, indent=4)
+            row = await cursor.fetchone()
+
+            return row[0] if row else 0
+
+
+async def add_money(user_id, amount):
+
+    async with aiosqlite.connect(DB_NAME) as db:
+
+        await db.execute("""
+            INSERT INTO economy (user_id, money)
+            VALUES (?, ?)
+            ON CONFLICT(user_id)
+            DO UPDATE SET money = money + ?
+        """, (str(user_id), amount, amount))
+
+        await db.commit()
 
 
 # -------------------------
@@ -44,41 +58,70 @@ def setup_events(client):
         user_id = str(message.author.id)
 
         # -------------------------
-        # LEVEL SYSTEM (JSON still active)
+        # LEVEL SYSTEM (SQLITE)
         # -------------------------
-        levels = load_levels()
+        await add_message(user_id)
 
-        if user_id not in levels:
-            levels[user_id] = {"messages": 0, "level": 0}
+        messages, level, last_msg, last_lvl = await get_level(user_id)
 
-        levels[user_id]["messages"] += 1
+        if messages >= 150:
 
-        if levels[user_id]["messages"] >= 150:
-
-            levels[user_id]["messages"] = 0
-            levels[user_id]["level"] += 1
+            await level_up(user_id)
 
             embed = discord.Embed(
                 title="🎉 LEVEL UP",
-                description=f"you are now level **{levels[user_id]['level']}**",
+                description=f"you are now level **{level + 1}**",
                 color=NAVY
             )
 
             await message.channel.send(embed=embed)
-
-        save_levels(levels)
+            return
 
         # -------------------------
-        # SWANO LEVEL
+        # LEVEL COMMAND
         # -------------------------
         if msg == "swano level":
 
             embed = discord.Embed(
                 title="📊 YOUR LEVEL",
                 description=(
-                    f"level: **{levels[user_id]['level']}**\n"
-                    f"progress: **{levels[user_id]['messages']}/150 messages**"
+                    f"level: **{level}**\n"
+                    f"messages: **{messages}/150**\n"
+                    f"last message: **{last_msg}**\n"
+                    f"last level up: **{last_lvl}**"
                 ),
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+            return
+
+        # -------------------------
+        # 8BALL
+        # -------------------------
+        if msg.startswith("swano 8ball"):
+
+            answers = [
+                "probably",
+                "maybe",
+                "yes",
+                "no",
+                "100% yes",
+                "not happening",
+                "never",
+                "ask again later"
+                "idfk ask chatgpt",
+                "i didnt quite understand buddy",
+                "uhmm..",
+                "ask again later im on my break",
+                "leave me alone."
+            ]
+
+            question = message.content[12:].strip()
+
+            embed = discord.Embed(
+                title="🎱 8BALL",
+                description=f"**Q:** {question}\n\n**A:** {random.choice(answers)}",
                 color=NAVY
             )
 
@@ -90,7 +133,7 @@ def setup_events(client):
         # -------------------------
         if msg == "ai work":
             client.ai_enabled = True
-            await message.channel.send("🤖 ai on")
+            await message.channel.send("yo wsgg its me ai auote crewmate bot 🤖")
             return
 
         if msg == "ai stop":
@@ -99,18 +142,15 @@ def setup_events(client):
             return
 
         # -------------------------
-        # BALANCE (JSON STILL)
+        # BALANCE
         # -------------------------
         if msg == "swano balance":
 
-            money = load_money()
-
-            if user_id not in money:
-                money[user_id] = 0
+            money = await get_money(user_id)
 
             embed = discord.Embed(
                 title="💰 SWUCKS",
-                description=f"{money[user_id]} swucks",
+                description=f"{money} swucks",
                 color=NAVY
             )
 
@@ -131,13 +171,7 @@ def setup_events(client):
 
             daily_cooldown[user_id] = now
 
-            money = load_money()
-
-            if user_id not in money:
-                money[user_id] = 0
-
-            money[user_id] += 250
-            save_money(money)
+            await add_money(user_id, 250)
 
             await message.channel.send("🎁 +250 swucks")
             return
@@ -155,8 +189,6 @@ def setup_events(client):
                     return
 
             work_cooldown[user_id] = now
-
-            level = levels[user_id]["level"]
 
             jobs = [
                 (30, "💼 CEO", 50, "you fired employees"),
@@ -181,13 +213,7 @@ def setup_events(client):
 
             name, pay, text = job
 
-            money = load_money()
-
-            if user_id not in money:
-                money[user_id] = 0
-
-            money[user_id] += pay
-            save_money(money)
+            await add_money(user_id, pay)
 
             embed = discord.Embed(
                 title=name,
@@ -205,7 +231,11 @@ def setup_events(client):
 
             embed = discord.Embed(
                 title="🛒 SHOP",
-                description="#1 VM - 500\n#2 Role - 30\n#3 Dare - 1000",
+                description=(
+                    "#1 Swano meowing vm - 500 swucks\n"
+                    "#2 Custom role - 30 swicks\n"
+                    "#3 Dare swano to do anything - 1000 swucks"
+                ),
                 color=NAVY
             )
 
@@ -217,16 +247,12 @@ def setup_events(client):
         # -------------------------
         if msg.startswith("swano buy"):
 
-            split = msg.split()
-            if len(split) < 3:
+            parts = msg.split()
+            if len(parts) < 3:
                 return
 
-            item = split[2]
-
-            money = load_money()
-
-            if user_id not in money:
-                money[user_id] = 0
+            item = parts[2]
+            money = await get_money(user_id)
 
             def brokie():
                 return discord.Embed(
@@ -236,45 +262,36 @@ def setup_events(client):
                 )
 
             if item == "#1":
-
-                if money[user_id] < 500:
+                if money < 500:
                     await message.channel.send(embed=brokie())
                     return
 
-                money[user_id] -= 500
-                save_money(money)
-
+                await add_money(user_id, -500)
                 await message.channel.send("<@1434299997133865030> chop chop city boii")
                 return
 
-            elif item == "#2":
-
-                if money[user_id] < 30:
+            if item == "#2":
+                if money < 30:
                     await message.channel.send(embed=brokie())
                     return
 
-                money[user_id] -= 30
-                save_money(money)
-
+                await add_money(user_id, -30)
                 await message.channel.send("<@1434299997133865030> role purchased")
                 return
 
-            elif item == "#3":
-
-                if money[user_id] < 1000:
+            if item == "#3":
+                if money < 1000:
                     await message.channel.send(embed=brokie())
                     return
 
-                money[user_id] -= 1000
-                save_money(money)
-
+                await add_money(user_id, -1000)
                 await message.channel.send(
                     f"<@1434299997133865030> chop chop do the dare for {message.author.mention}"
                 )
                 return
 
         # -------------------------
-        # ADMIN GRANT
+        # ADMIN GRANT MONEY
         # -------------------------
         if msg.startswith("swano grant"):
 
@@ -293,22 +310,73 @@ def setup_events(client):
                 await message.channel.send("max 1000")
                 return
 
-            if len(message.mentions) == 0:
+            if not message.mentions:
                 return
 
             target = message.mentions[0]
 
-            money = load_money()
-
-            tid = str(target.id)
-
-            if tid not in money:
-                money[tid] = 0
-
-            money[tid] += amount
-            save_money(money)
+            await add_money(target.id, amount)
 
             await message.channel.send(f"gave {amount} swucks to {target.mention}")
+            return
+
+        # -------------------------
+        # ADMIN GIVE MESSAGES
+        # -------------------------
+        if msg.startswith("swano give"):
+
+            if not message.author.guild_permissions.administrator:
+                await message.channel.send("admins only")
+                return
+
+            parts = message.content.split()
+
+            if len(parts) < 3 or not message.mentions:
+                return
+
+            target = message.mentions[0]
+            amount = int(parts[-1])
+
+            if amount > 500:
+                await message.channel.send("max 500 messages")
+                return
+
+            # directly update levels via helper
+            for _ in range(amount):
+                await add_message(target.id)
+
+            await message.channel.send(f"gave {amount} messages to {target.mention}")
+            return
+
+        # -------------------------
+        # LEADERBOARD
+        # -------------------------
+        if msg == "swano leaderboard":
+
+            async with aiosqlite.connect(DB_NAME) as db:
+
+                async with db.execute("""
+                    SELECT e.user_id, e.money, COALESCE(l.level, 0)
+                    FROM economy e
+                    LEFT JOIN levels l ON e.user_id = l.user_id
+                    ORDER BY e.money DESC
+                    LIMIT 10
+                """) as cursor:
+
+                    rows = await cursor.fetchall()
+
+            desc = ""
+
+            for i, (uid, money, lvl) in enumerate(rows, start=1):
+                desc += f"**{i}.** <@{uid}> — 💰 {money} swucks | 📊 lvl {lvl}\n"
+
+            embed = discord.Embed(
+                title="🏆 SWANO LEADERBOARD",
+                description=desc,
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
             return
 
         # -------------------------
@@ -330,30 +398,4 @@ def setup_events(client):
         if client.ai_enabled:
             reply = client.ask_ai(message.content)
             await message.channel.send(reply)
-            return
-
-        # -------------------------
-        # 🧪 SQLITE TEST COMMAND (NEW)
-        # -------------------------
-        if msg == "swano test db":
-
-            import aiosqlite
-
-            async with aiosqlite.connect("swano.db") as db:
-
-                await db.execute("""
-                    CREATE TABLE IF NOT EXISTS test (
-                        user TEXT,
-                        value INTEGER
-                    )
-                """)
-
-                await db.execute("""
-                    INSERT INTO test (user, value)
-                    VALUES (?, ?)
-                """, (str(message.author.id), 1))
-
-                await db.commit()
-
-            await message.channel.send("✅ sqlite works, database is alive")
             return
