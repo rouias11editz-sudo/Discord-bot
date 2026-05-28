@@ -10,7 +10,7 @@ daily_cooldown = {}
 work_cooldown = {}
 
 # -------------------------
-# FILES
+# FILE HELPERS
 # -------------------------
 def load_money():
     with open("money.json", "r") as f:
@@ -20,7 +20,6 @@ def save_money(data):
     with open("money.json", "w") as f:
         json.dump(data, f, indent=4)
 
-
 def load_levels():
     with open("levels.json", "r") as f:
         return json.load(f)
@@ -29,9 +28,8 @@ def save_levels(data):
     with open("levels.json", "w") as f:
         json.dump(data, f, indent=4)
 
-
 # -------------------------
-# EVENTS
+# SETUP
 # -------------------------
 def setup_events(client):
 
@@ -59,11 +57,9 @@ def setup_events(client):
             levels[user_id]["messages"] = 0
             levels[user_id]["level"] += 1
 
-            lvl = levels[user_id]["level"]
-
             embed = discord.Embed(
                 title="🎉 LEVEL UP",
-                description=f"you are now level **{lvl}**",
+                description=f"you are now level **{levels[user_id]['level']}**",
                 color=NAVY
             )
 
@@ -72,19 +68,68 @@ def setup_events(client):
         save_levels(levels)
 
         # -------------------------
-        # ⭐ SWANO LEVEL COMMAND (NEW)
+        # SWANO LEVEL
         # -------------------------
         if msg == "swano level":
-
-            lvl = levels[user_id]["level"]
-            msgs = levels[user_id]["messages"]
 
             embed = discord.Embed(
                 title="📊 YOUR LEVEL",
                 description=(
-                    f"level: **{lvl}**\n"
-                    f"progress: **{msgs}/150 messages**"
+                    f"level: **{levels[user_id]['level']}**\n"
+                    f"progress: **{levels[user_id]['messages']}/150 messages**"
                 ),
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+            return
+
+        # -------------------------
+        # 8BALL
+        # -------------------------
+        if msg.startswith("swano 8ball"):
+
+            answers = [
+                "🎱 probably",
+                "🎱 maybe",
+                "🎱 yes",
+                "🎱 no",
+                "🎱 100% yes",
+                "🎱 not happening",
+                "🎱 never",
+                "🎱 ask again later"
+            ]
+
+            question = message.content[12:].strip()
+
+            embed = discord.Embed(
+                title="🎱 8BALL",
+                description=f"**Q:** {question}\n\n**A:** {random.choice(answers)}",
+                color=NAVY
+            )
+
+            await message.channel.send(embed=embed)
+            return
+
+        # -------------------------
+        # LEADERBOARD
+        # -------------------------
+        if msg == "swano leaderboard":
+
+            sorted_users = sorted(
+                levels.items(),
+                key=lambda x: x[1]["level"],
+                reverse=True
+            )[:10]
+
+            desc = ""
+
+            for i, (uid, data) in enumerate(sorted_users, start=1):
+                desc += f"**{i}.** <@{uid}> — level {data['level']}\n"
+
+            embed = discord.Embed(
+                title="🏆 LEADERBOARD",
+                description=desc if desc else "no data yet",
                 color=NAVY
             )
 
@@ -96,12 +141,12 @@ def setup_events(client):
         # -------------------------
         if msg == "ai work":
             client.ai_enabled = True
-            await message.channel.send("🤖 wsgg its me auote crewmate ai")
+            await message.channel.send("🤖 ai on")
             return
 
         if msg == "ai stop":
             client.ai_enabled = False
-            await message.channel.send("💤 ai is off i schelp")
+            await message.channel.send("💤 ai off")
             return
 
         # -------------------------
@@ -113,7 +158,6 @@ def setup_events(client):
 
             if user_id not in money:
                 money[user_id] = 0
-                save_money(money)
 
             embed = discord.Embed(
                 title="💰 SWUCKS",
@@ -133,7 +177,7 @@ def setup_events(client):
 
             if user_id in daily_cooldown:
                 if now - daily_cooldown[user_id] < 86400:
-                    await message.channel.send("⏳ come back later bro")
+                    await message.channel.send("⏳ come back later")
                     return
 
             daily_cooldown[user_id] = now
@@ -144,7 +188,6 @@ def setup_events(client):
                 money[user_id] = 0
 
             money[user_id] += 250
-
             save_money(money)
 
             await message.channel.send("🎁 +250 swucks")
@@ -159,7 +202,7 @@ def setup_events(client):
 
             if user_id in work_cooldown:
                 if now - work_cooldown[user_id] < 1800:
-                    await message.channel.send("⏳ chill wait 30 min")
+                    await message.channel.send("⏳ 30 min cooldown")
                     return
 
             work_cooldown[user_id] = now
@@ -167,13 +210,13 @@ def setup_events(client):
             level = levels[user_id]["level"]
 
             jobs = [
-                (30, "💼 CEO", 50, "you fired 37 employees"),
-                (25, "🩺 Doctor", 40, "you diagnosed skill issue"),
-                (20, "👨‍🍳 Chef", 30, "you burned food"),
-                (15, "🔥 Firefighter", 25, "you saved a cat"),
-                (10, "🚔 Police", 15, "you arrested raccoon"),
-                (5, "☕ Barista", 8, "you spilled coffee"),
-                (1, "🧹 Janitor", 3, "you cleaned toilet")
+                (30, "💼 CEO", 50, "you fired employees, congrats ure corrupt!"),
+                (25, "🩺 Doctor", 40, "you healed people from mental ilnesses! swano thanks u for making her healthy"),
+                (20, "👨‍🍳 Chef", 30, "you burned water?????"),
+                (15, "🔥 Firefighter", 25, "you saved cats woww such a hero"),
+                (10, "🚔 Police", 15, "you arrested an inflatable boat??} Ok..."),
+                (5, "☕ Barista", 8, "you made coffee w a messed up  name ok!!"),
+                (1, "🧹 Janitor", 3, "you cleaned toilet and got stains on ur hand, wow.")
             ]
 
             job = None
@@ -195,7 +238,6 @@ def setup_events(client):
                 money[user_id] = 0
 
             money[user_id] += pay
-
             save_money(money)
 
             embed = discord.Embed(
@@ -215,9 +257,9 @@ def setup_events(client):
             embed = discord.Embed(
                 title="🛒 SHOP",
                 description=(
-                    "#1 swano vm — 500\n"
-                    "#2 custom role — 30\n"
-                    "#3 dare swano — 1000"
+                    "#1 Swano meowing VM - 500\n"
+                    "#2 Custom role - 30\n"
+                    "#3 Dare swano to do anything - 1000"
                 ),
                 color=NAVY
             )
@@ -231,47 +273,50 @@ def setup_events(client):
         if msg.startswith("swano buy"):
 
             split = msg.split()
-
             if len(split) < 3:
                 return
 
             item = split[2]
-
             money = load_money()
 
             if user_id not in money:
                 money[user_id] = 0
 
+            def not_enough():
+                return discord.Embed(
+                    title="💀 BROKIE",
+                    description="fricking brokie go get rich",
+                    color=NAVY
+                )
+
             if item == "#1":
 
                 if money[user_id] < 500:
-                    await message.channel.send("fricking brokie go get rich")
+                    await message.channel.send(embed=not_enough())
                     return
 
                 money[user_id] -= 500
                 save_money(money)
 
-                await message.channel.send(
-                    "<@1434299997133865030> chop chop city boii"
-                )
+                await message.channel.send("<@1434299997133865030> chop chop city boii")
+                return
 
             elif item == "#2":
 
                 if money[user_id] < 30:
-                    await message.channel.send("fricking brokie go get rich")
+                    await message.channel.send(embed=not_enough())
                     return
 
                 money[user_id] -= 30
                 save_money(money)
 
-                await message.channel.send(
-                    "<@1434299997133865030> custom role purchased"
-                )
+                await message.channel.send("<@1434299997133865030> role bought")
+                return
 
             elif item == "#3":
 
                 if money[user_id] < 1000:
-                    await message.channel.send("fricking brokie go get rich")
+                    await message.channel.send(embed=not_enough())
                     return
 
                 money[user_id] -= 1000
@@ -280,8 +325,7 @@ def setup_events(client):
                 await message.channel.send(
                     f"<@1434299997133865030> chop chop do the dare for {message.author.mention}"
                 )
-
-            return
+                return
 
         # -------------------------
         # ADMIN GRANT
@@ -300,7 +344,7 @@ def setup_events(client):
             amount = int(parts[2].replace("sw", ""))
 
             if amount > 1000:
-                await message.channel.send("max 1000 swucks")
+                await message.channel.send("max 1000")
                 return
 
             if len(message.mentions) == 0:
@@ -316,13 +360,11 @@ def setup_events(client):
                 money[tid] = 0
 
             money[tid] += amount
-
             save_money(money)
 
             await message.channel.send(
                 f"gave {amount} swucks to {target.mention}"
             )
-
             return
 
         # -------------------------
@@ -332,7 +374,7 @@ def setup_events(client):
 
             text = message.content[11:]
 
-            for i in range(5):
+            for _ in range(5):
                 await message.channel.send(text)
                 await asyncio.sleep(0.5)
 
