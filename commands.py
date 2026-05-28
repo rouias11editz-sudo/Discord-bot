@@ -1,115 +1,120 @@
 import discord
-import random
+from discord import app_commands
 
 NAVY = 0x1B2B5B
 
-def setup_commands(tree, client):
+
+# You must already have this somewhere in your bot
+# async def call_openrouter(prompt): ...
+
+
+async def setup_commands(tree):
 
     # -------------------------
-    # HOW GAY
+    # COMPATIBILITY / SHIP
     # -------------------------
-    @tree.command(name="howgay")
-    async def howgay(
-        interaction: discord.Interaction,
-        user: discord.Member
-    ):
+    @tree.command(name="ship", description="check compatibility between two users")
+    async def ship(interaction: discord.Interaction, user1: discord.Member, user2: discord.Member):
 
-        embed = discord.Embed(
-            title="🌈 how gay",
-            description=(
-                f"{user.mention} is "
-                f"**{random.randint(0,100)}% gay**"
-            ),
-            color=NAVY
-        )
+        import random
 
-        await interaction.response.send_message(embed=embed)
+        SWANUS_1 = 652988923672395779
+        SWANUS_2 = 1434299997133865030
 
-    # -------------------------
-    # HOW AUTISTIC
-    # -------------------------
-    @tree.command(name="howautistic")
-    async def howautistic(
-        interaction: discord.Interaction,
-        user: discord.Member
-    ):
+        # special override
+        if (user1.id == SWANUS_1 and user2.id == SWANUS_2) or \
+           (user1.id == SWANUS_2 and user2.id == SWANUS_1):
 
-        embed = discord.Embed(
-            title="🧩 how autistic",
-            description=(
-                f"{user.mention} is "
-                f"**{random.randint(0,100)}% autistic**"
-            ),
-            color=NAVY
-        )
-
-        await interaction.response.send_message(embed=embed)
-
-    # -------------------------
-    # COMPATIBILITY
-    # -------------------------
-    @tree.command(name="compatibility")
-    async def compatibility(
-        interaction: discord.Interaction,
-        user1: discord.Member,
-        user2: discord.Member
-    ):
-
-        # SWANUS CANON
-        if (
-            (user1.id == 1434299997133865030 and user2.id == 652988923672395779)
-            or
-            (user1.id == 652988923672395779 and user2.id == 1434299997133865030)
-        ):
-
-            result = (
-                "💍 **100% compatibility**\n"
-                "ouhh swanus mentioned 👀👀👀"
+            embed = discord.Embed(
+                title="💞 COMPATIBILITY TEST",
+                description="SWANUS MENTIONEDD??!! ouhhh shiiii 100000% compatibility 👀👀",
+                color=NAVY
             )
 
-        else:
+            await interaction.response.send_message(embed=embed)
+            return
 
-            result = (
-                f"💘 **{random.randint(0,100)}% compatibility**"
-            )
+        score = random.randint(0, 100)
 
         embed = discord.Embed(
-            title="💘 compatibility",
-            description=(
-                f"{user1.mention} + {user2.mention}\n\n"
-                f"{result}"
-            ),
+            title="💞 COMPATIBILITY TEST",
+            description=f"{user1.mention} ❤️ {user2.mention}\n\ncompatibility: **{score}%**",
             color=NAVY
         )
 
         await interaction.response.send_message(embed=embed)
 
-    # -------------------------
-    # GLAZE
-    # -------------------------
-    @tree.command(name="glaze")
-    async def glaze(
-        interaction: discord.Interaction,
-        user: discord.Member,
-        style: str = "sigma"
-    ):
 
-        prompt = (
-            f"glaze {user.display_name} "
-            f"in {style} style, "
-            f"funny gen z tone, chaotic, lowercase"
-        )
+    # -------------------------
+    # GLAZE (REAL OPENROUTER AI)
+    # -------------------------
+    @tree.command(name="glaze", description="AI glazes a user in a chosen style")
+    async def glaze(interaction: discord.Interaction, user: discord.Member, style: str):
 
-        result = client.ask_ai(prompt)
+        await interaction.response.defer()
+
+        prompt = f"""
+You are an AI that writes a single expressive paragraph glazing a user.
+
+Target: {user.name}
+Style: {style}
+
+Rules:
+- One paragraph only
+- Fully AI-generated (no templates)
+- Style must influence tone heavily (anime = dramatic, sigma = motivational, etc.)
+- No sexual content
+- Make it feel like hype narration or character introduction
+- You're gen Z.
+"""
+
+        text = await call_openrouter(prompt)
 
         embed = discord.Embed(
-            title=f"🔥 {style} glaze",
-            description=result,
+            title="✨ AI GLAZE",
+            description=text,
             color=NAVY
         )
 
-        embed.set_footer(
-            text=f"requested by {interaction.user.display_name}"
+        embed.add_field(name="👤 target", value=user.mention, inline=True)
+        embed.add_field(name="🎨 style", value=style, inline=True)
+
+        await interaction.followup.send(embed=embed)
+
+
+    # -------------------------
+    # GAY CHECK
+    # -------------------------
+    @tree.command(name="gay", description="check gay percentage")
+    async def gay(interaction: discord.Interaction, user: discord.Member):
+
+        import random
+
+        score = random.randint(0, 100)
+
+        embed = discord.Embed(
+            title="🌈 GAY DETECTOR",
+            description=f"{user.mention} is **{score}% gay**",
+            color=NAVY
+        )
+
+        await interaction.response.send_message(embed=embed)
+
+
+    # -------------------------
+    # AUTISM CHECK
+    # -------------------------
+    @tree.command(name="autistic", description="check autism level")
+    async def autistic(interaction: discord.Interaction, user: discord.Member):
+
+        import random
+
+        score = random.randint(0, 100)
+
+        embed = discord.Embed(
+            title="🧠 AUTISM SCANNER",
+            description=f"{user.mention} is **{score}% autistic**",
+            color=NAVY
         )
 
         await interaction.response.send_message(embed=embed)
