@@ -1,8 +1,10 @@
 import discord
 from discord.ext import commands
 
+# ───── STAFF ALERT CHANNEL ─────
 MOD_CHANNEL_ID = 1510608455856029750
 
+# ───── MOD ROLES ─────
 MOD_ROLE_IDS = [
     1510271113651818717,
     1510273045691109417,
@@ -10,6 +12,7 @@ MOD_ROLE_IDS = [
     1510273221172396032
 ]
 
+# ───── AUTO RESPONSES ─────
 AUTO_RESPONSES = {
     "gojo": "are you 19+??? gojo is mah goat",
     "hori": "Isn't that james's #1 feet licker??? she's so excited for jems 🥹👀",
@@ -29,6 +32,7 @@ AUTO_RESPONSES = {
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.cooldown = set()  # prevents duplicate spam per message
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -46,8 +50,14 @@ class Events(commands.Cog):
             await message.channel.send(embed=embed)
             return
 
-        # ───── MODS SYSTEM ─────
+        # ───── MODS ALERT SYSTEM ─────
         if "mods" in content:
+
+            # prevent duplicate spam on same message
+            if message.id in self.cooldown:
+                return
+            self.cooldown.add(message.id)
+
             channel = self.bot.get_channel(MOD_CHANNEL_ID)
 
             if channel:
@@ -56,8 +66,8 @@ class Events(commands.Cog):
                 link = f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}"
 
                 embed = discord.Embed(
-                    title="🚨 mod needed asap",
                     description=
+                    "🚨 **mod needed asap**\n\n"
                     f"{role_mentions}\n\n"
                     f"📍 {message.channel.mention}\n"
                     f"🔗 [Jump to message]({link})",
@@ -65,6 +75,3 @@ class Events(commands.Cog):
                 )
 
                 await channel.send(embed=embed)
-
-async def setup(bot):
-    await bot.add_cog(Events(bot))
