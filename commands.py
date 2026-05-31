@@ -12,7 +12,6 @@ class SwanoCommands(commands.Cog):
 
         content = message.content.lower().strip()
 
-        # ───── ONLY SWANO COMMANDS ─────
         if not content.startswith("swano "):
             return
 
