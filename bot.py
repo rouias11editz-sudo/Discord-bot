@@ -1,54 +1,22 @@
 import discord
-from discord import app_commands
-import asyncio
+from discord.ext import commands
 
-from events import setup_events
-from database import init_db
-
-# -------------------------
-# BOT SETUP
-# -------------------------
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 
-client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
-client.tree = tree
-
-# -------------------------
-# AI SYSTEM FLAG
-# -------------------------
-client.ai_enabled = False
-
-# Dummy AI function (replace if you already have one)
-def ask_ai(prompt):
-    return "ai response placeholder"
-
-client.ask_ai = ask_ai
-
-
-# -------------------------
-# READY EVENT
-# -------------------------
-@client.event
+@bot.event
 async def on_ready():
-    print(f"Logged in as {client.user}")
+    print(f"Logged in as {bot.user}")
 
-    # INIT DATABASE (IMPORTANT)
-    await init_db()
+# load cogs
+async def load_extensions():
+    await bot.load_extension("commands")
+    await bot.load_extension("events")
 
-    # LOAD EVENTS
-    setup_events(client)
+import asyncio
+asyncio.run(load_extensions())
 
-    try:
-        synced = await tree.sync()
-        print(f"Synced {len(synced)} slash commands")
-    except Exception as e:
-        print("Slash sync error:", e)
-
-
-# -------------------------
-# RUN BOT
-# -------------------------
-client.run("YOUR_BOT_TOKEN_HERE")
+bot.run("YOUR_TOKEN")
