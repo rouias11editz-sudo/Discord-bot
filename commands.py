@@ -1,120 +1,121 @@
 import discord
-from discord import app_commands
+from discord.ext import commands
 
-NAVY = 0x1B2B5B
+class SwanoCommands(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-
-# You must already have this somewhere in your bot
-# async def call_openrouter(prompt): ...
-
-
-async def setup_commands(tree):
-
-    # -------------------------
-    # COMPATIBILITY / SHIP
-    # -------------------------
-    @tree.command(name="ship", description="check compatibility between two users")
-    async def ship(interaction: discord.Interaction, user1: discord.Member, user2: discord.Member):
-
-        import random
-
-        SWANUS_1 = 652988923672395779
-        SWANUS_2 = 1434299997133865030
-
-        # special override
-        if (user1.id == SWANUS_1 and user2.id == SWANUS_2) or \
-           (user1.id == SWANUS_2 and user2.id == SWANUS_1):
-
-            embed = discord.Embed(
-                title="💞 COMPATIBILITY TEST",
-                description="SWANUS MENTIONEDD??!! ouhhh shiiii 100000% compatibility 👀👀",
-                color=NAVY
-            )
-
-            await interaction.response.send_message(embed=embed)
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot:
             return
 
-        score = random.randint(0, 100)
+        content = message.content.lower().strip()
 
-        embed = discord.Embed(
-            title="💞 COMPATIBILITY TEST",
-            description=f"{user1.mention} ❤️ {user2.mention}\n\ncompatibility: **{score}%**",
-            color=NAVY
-        )
+        # ───── ONLY SWANO COMMANDS ─────
+        if not content.startswith("swano "):
+            return
 
-        await interaction.response.send_message(embed=embed)
+        color = 0x001f3f  # navy blue
+
+        # ───── P4P ─────
+        if content == "swano p4p":
+            embed = discord.Embed(
+                description=
+                "୨୧ ────────────── ୨୧\n\n"
+                "♡ Ping 4 Ping\n\n"
+                "✧ Send our ad in your partnership channel\n\n"
+                "✧ Send an uncropped screenshot as proof\n\n"
+                "✧ Send your ad here so we can post it as soon as possible\n\n"
+                "₊˚ Thank you for partnering with us! ♡\n\n"
+                "୨୧ ────────────── ୨୧",
+                color=color
+            )
+            await message.channel.send(embed=embed)
+            return
+
+        # ───── PARTNERSHIP ─────
+        elif content == "swano partnership":
+            embed = discord.Embed(
+                description=
+                "୨୧ ────────────── ୨୧\n\n"
+                "🤝 Partnership Request\n\n"
+                "✧ Send your server advertisement below\n\n"
+                "✧ Partnership Requirements\n"
+                "• 50+ members\n"
+                "• Fully SFW community\n"
+                "• Stox community\n\n"
+                "✧ A staff member will review your request\n\n"
+                "✧ Please be patient while waiting for a response ♡\n\n"
+                "₊˚ Thank you for your interest in partnering with us!\n\n"
+                "୨୧ ────────────── ୨୧",
+                color=color
+            )
+            await message.channel.send(embed=embed)
+            return
+
+        # ───── BLIST ─────
+        elif content == "swano blist":
+            embed = discord.Embed(
+                description=
+                "୨୧ ────────────── ୨୧\n\n"
+                "📋 Blacklist Submission\n\n"
+                "✧ Submit your blacklist report below\n\n"
+                "✧ Please include:\n"
+                "• User ID\n"
+                "• Reason for blacklist\n"
+                "• Valid proof/evidence\n\n"
+                "✧ Reports without sufficient proof may be denied\n\n"
+                "✧ A staff member will review your submission\n\n"
+                "✧ Please be patient while waiting for a response ♡\n\n"
+                "₊˚ Thank you for helping keep our community safe ♡\n\n"
+                "୨୧ ────────────── ୨୧",
+                color=color
+            )
+            await message.channel.send(embed=embed)
+            return
+
+        # ───── HELP ─────
+        elif content == "swano help":
+            embed = discord.Embed(
+                description=
+                "୨୧ ────────────── ୨୧\n\n"
+                "🆘 Help & Support\n\n"
+                "✧ Need help with something? Feel free to explain your issue below!\n\n"
+                "✧ You may use this ticket for:\n"
+                "• Questions or concerns\n"
+                "• Reporting issues\n"
+                "• Server-related assistance\n"
+                "• General support\n\n"
+                "✧ Please provide as much detail as possible so we can assist you better ♡\n\n"
+                "✧ Please be patient while waiting for a staff member to respond\n\n"
+                "₊˚ We’re happy to help! ♡\n\n"
+                "୨୧ ────────────── ୨୧",
+                color=color
+            )
+            await message.channel.send(embed=embed)
+            return
+
+        # ───── APPLY ─────
+        elif content == "swano apply":
+            embed = discord.Embed(
+                description=
+                "୨୧ ────────────── ୨୧\n\n"
+                "🛡️ Moderator Applications\n\n"
+                "✧ Interested in becoming a moderator? Send your application below!\n\n"
+                "✧ Requirements\n"
+                "• Level 25+\n"
+                "• Must have been in the server for at least 1 week\n"
+                "• 500+ messages overall\n\n"
+                "✧ Applications will be reviewed by staff\n\n"
+                "✧ Please be honest and detailed in your application ♡\n\n"
+                "₊˚ Good luck! We look forward to reading your application ♡\n\n"
+                "୨୧ ────────────── ୨୧",
+                color=color
+            )
+            await message.channel.send(embed=embed)
+            return
 
 
-    # -------------------------
-    # GLAZE (REAL OPENROUTER AI)
-    # -------------------------
-    @tree.command(name="glaze", description="AI glazes a user in a chosen style")
-    async def glaze(interaction: discord.Interaction, user: discord.Member, style: str):
-
-        await interaction.response.defer()
-
-        prompt = f"""
-You are an AI that writes a single expressive paragraph glazing a user.
-
-Target: {user.name}
-Style: {style}
-
-Rules:
-- One paragraph only
-- Fully AI-generated (no templates)
-- Style must influence tone heavily (anime = dramatic, sigma = motivational, etc.)
-- No sexual content
-- Make it feel like hype narration or character introduction
-- You're gen Z.
-"""
-
-        text = await call_openrouter(prompt)
-
-        embed = discord.Embed(
-            title="✨ AI GLAZE",
-            description=text,
-            color=NAVY
-        )
-
-        embed.add_field(name="👤 target", value=user.mention, inline=True)
-        embed.add_field(name="🎨 style", value=style, inline=True)
-
-        await interaction.followup.send(embed=embed)
-
-
-    # -------------------------
-    # GAY CHECK
-    # -------------------------
-    @tree.command(name="gay", description="check gay percentage")
-    async def gay(interaction: discord.Interaction, user: discord.Member):
-
-        import random
-
-        score = random.randint(0, 100)
-
-        embed = discord.Embed(
-            title="🌈 GAY DETECTOR",
-            description=f"{user.mention} is **{score}% gay**",
-            color=NAVY
-        )
-
-        await interaction.response.send_message(embed=embed)
-
-
-    # -------------------------
-    # AUTISM CHECK
-    # -------------------------
-    @tree.command(name="autistic", description="check autism level")
-    async def autistic(interaction: discord.Interaction, user: discord.Member):
-
-        import random
-
-        score = random.randint(0, 100)
-
-        embed = discord.Embed(
-            title="🧠 AUTISM SCANNER",
-            description=f"{user.mention} is **{score}% autistic**",
-            color=NAVY
-        )
-
-        await interaction.response.send_message(embed=embed)
+async def setup(bot):
+    await bot.add_cog(SwanoCommands(bot))
