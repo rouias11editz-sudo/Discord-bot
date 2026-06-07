@@ -8,7 +8,8 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 responses = {
-    "gojo": "*He pulled you onto his lap, his strong arms wrapping around your waist possessively.* "Okay okay... I love your cortisol chat friends. They're cool." *He pressed a kiss to your neck, his voice dropping lower.* "But you're right—Gojo is literally the coolest, sexiest thing that ever happened to me. No competition, baby."",
+    "gojo": "*He pulled you onto his lap, his strong arms wrapping around your waist possessively.* \"Okay okay... I love your cortisol chat friends. They're cool.\" *He pressed a kiss to your neck, his voice dropping lower.* \"But you're right—Gojo is literally the coolest, sexiest thing that ever happened to me. No competition, baby.\"",
+
     "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀",
     "swano": "BOII WHAT U SAY BOUT MAH GOAT SWANO! BOIII TS AINT TUFFF! 😐🫱🫱🫱",
     "venus": "venus is swanie’s mommyyyy, swano needs mwommy mwilkies *blush*",
@@ -32,15 +33,18 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    msg = message.content.lower().strip()
+    msg = message.content.lower()
 
-    if msg in responses:
-        embed = discord.Embed(
-            title=msg.capitalize(),
-            description=responses[msg],
-            color=0x000080  # Navy blue
-        )
-        await message.channel.send(embed=embed)
+    # partial match system (not exact match anymore)
+    for key, response in responses.items():
+        if key in msg:
+            embed = discord.Embed(
+                title=key.capitalize(),
+                description=response,
+                color=0x000080  # navy blue
+            )
+            await message.channel.send(embed=embed)
+            break  # prevents multiple triggers
 
     await bot.process_commands(message)
 
