@@ -1,0 +1,42 @@
+import discord
+from discord.ext import commands
+import os
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+responses = {
+    "gojo": "are you 19+??? gojo is mah goat",
+    "hori": "Isn't that james's #1 feet licker??? she's so horny for jems 🥹👀",
+    "swano": "BOII WHAT U SAY BOUT MAH GOAT SWANO! BOIII TS AINT TUFFF! 😐🫱🫱🫱",
+    "venus": "venus is swanie’s mommyyyy, swano needs mwommy mwilkies *blush*",
+    "archa": "i love archa (platonic intention no sexual intention feet prevention quote motivation, sending love from cosmic comet planet ☄️)",
+    "jju": "OMG JUHOON MY BABYYYY! If ure talking bout sum twinkie jju then dttm, leave asap.",
+    "juhoon": "OMG JUHOON SIAOAJIDJDKS THATS SWANOS HUBBYYY",
+    "martin": "those holy predatory godly sexy eyes 👀",
+    "james": "WANNA SEE MY HELICOPTER?? 🚁",
+    "sean": "my eom freak 👅 👅 👅 👅 sean one chance pls",
+    "keonho": "AWHH URE TALKIJG ANOUT THE CUTEST AND GAYEST MEMBERRR! we love gay keonho<3",
+    "devil": "never knew the devil was a twink.",
+    "kisi": "IM IN THE THICK OF IT EVERYBODY KNOWS"
+}
+
+@bot.event
+async def on_ready():
+    print(f"Logged in as {bot.user}")
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    msg = message.content.lower().strip()
+
+    if msg in responses:
+        await message.channel.send(responses[msg])
+
+    await bot.process_commands(message)
+
+bot.run(os.getenv("DISCORD_TOKEN"))
