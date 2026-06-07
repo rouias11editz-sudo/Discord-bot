@@ -21,7 +21,8 @@ responses = {
     "sean": "my eom freak 👅 👅 👅 👅 sean one chance pls",
     "keonho": "AWHH URE TALKIJG ANOUT THE CUTEST AND GAYEST MEMBERRR! we love gay keonho<3",
     "devil": "never knew the devil was a twink.",
-    "kisi": "IM IN THE THICK OF IT EVERYBODY KNOWS"
+    "kisi": "IM IN THE THICK OF IT EVERYBODY KNOWS",
+    "kijo: oh SHE? KIJO got the DOOR READY FOR U 🚪👈🏼"
 }
 
 @bot.event
