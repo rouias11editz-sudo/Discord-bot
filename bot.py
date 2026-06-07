@@ -22,7 +22,7 @@ responses = {
     "keonho": "AWHH URE TALKIJG ANOUT THE CUTEST AND GAYEST MEMBERRR! we love gay keonho<3",
     "devil": "never knew the devil was a twink.",
     "kisi": "IM IN THE THICK OF IT EVERYBODY KNOWS",
-    "kijo: oh SHE? KIJO got the DOOR READY FOR U 🚪👈🏼"
+    "kijo": "oh SHE? KIJO got the DOOR READY FOR U 🚪👈🏼"
 }
 
 @bot.event
@@ -36,7 +36,6 @@ async def on_message(message):
 
     msg = message.content.lower()
 
-    # partial match system (not exact match anymore)
     for key, response in responses.items():
         if key in msg:
             embed = discord.Embed(
@@ -45,8 +44,13 @@ async def on_message(message):
                 color=0x000080  # navy blue
             )
             await message.channel.send(embed=embed)
-            break  # prevents multiple triggers
+            break
 
     await bot.process_commands(message)
 
-bot.run(os.getenv("DISCORD_TOKEN"))
+token = os.getenv("DISCORD_TOKEN")
+
+if not token:
+    print("ERROR: DISCORD_TOKEN not found in environment variables!")
+else:
+    bot.run(token)
